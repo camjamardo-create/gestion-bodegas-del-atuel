@@ -30,7 +30,7 @@ herramientas que oculten el SQL.
 
 |   Integrante   |   Legajo   |   GitHub   |
 |   ----------   |   ------   |   ------   |
-| Jamardo, Camila | 10842 | [@camjamardo](https://github.com/camjamardo) |
+| Jamardo, Camila | 10842 | [@camjamardo-create](https://github.com/camjamardo) |
 | Sirotiuk, Juliana | — | [@julisirotiuk](https://github.com/julisirotiuk) |
  
 ---
