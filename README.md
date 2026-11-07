@@ -3,7 +3,6 @@ Modelado y desarrollo de la base de datos de **Bodegas del Atuel**, una empresa
 vitivinícola ficticia que integra la producción de uva y vino con su distribución
 y venta a través de una red de salas de venta.
 
-> Estado: Etapa 1 — Modelado
 
 ## Descripción del proyecto
 
@@ -30,7 +29,7 @@ herramientas que oculten el SQL.
 
 |   Integrante   |   Legajo   |   GitHub   |
 |   ----------   |   ------   |   ------   |
-| Jamardo, Camila | 10842 | [@camjamardo](https://github.com/camjamardo) |
+| Jamardo, Camila | 10842 | [@camjamardo-create](https://github.com/camjamardo-create) |
 | Sirotiuk, Juliana | — | [@julisirotiuk](https://github.com/julisirotiuk) |
  
 ---
@@ -39,11 +38,34 @@ herramientas que oculten el SQL.
 Para trabajar con el proyecto en local:
 
 - [PostgreSQL 14+](https://www.postgresql.org/download/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (se utiliza desde la Etapa 2)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 - Cliente SQL: `psql`, DBeaver o pgAdmin
 - [draw.io](https://app.diagrams.net/) para editar el DER
 - Python 3.11+ (Etapa 3, carga masiva)
 - Git
+
+---
+
+## Base de datos local
+
+Ejecutar desde la raíz del repositorio. 
+
+Crear la base y aplicar el esquema 001:
+
+```bash
+createdb -U postgres -E UTF8 -T template0 bodegas_del_atuel
+psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f db/migrations 001_esquema.sql
+```
+
+Para reiniciar la base desde cero:
+
+```bash 
+dropdb --if-exists bodegas_del_atuel
+createdb -E UTF8 -T template0 bodegas_del_atuel
+psql -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f db/migrations/001_esquema.sql
+```
+
+> **Atención:** `dropdb` elimina todos los datos de la base. Usarlo solo en desarrollo o hacer un backup antes. 
 
 ---
 
