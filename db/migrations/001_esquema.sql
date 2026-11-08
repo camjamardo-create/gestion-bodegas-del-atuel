@@ -119,10 +119,10 @@ CREATE TABLE transportista_cubre_localidad(
 
     PRIMARY KEY (codigo_transportista, codigo_postal_localidad),
 
-    CONSTRAINT fk_codigo_transportista_localidad
+    CONSTRAINT fk_transportista_cubre_localidad_transportista
         FOREIGN KEY (codigo_transportista) REFERENCES transportista (codigo),
 
-    CONSTRAINT fk_cp_localidad_transportista
+    CONSTRAINT fk_transportista_cubre_localidad_localidad
         FOREIGN KEY (codigo_postal_localidad) REFERENCES localidad (codigo_postal)
 );
 
