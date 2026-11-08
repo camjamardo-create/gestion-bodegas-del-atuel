@@ -50,22 +50,37 @@ Para trabajar con el proyecto en local:
 
 Ejecutar desde la raíz del repositorio. 
 
-Crear la base y aplicar el esquema 001:
-
-```bash
-createdb -U postgres -E UTF8 -T template0 bodegas_del_atuel
-psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f db/migrations 001_esquema.sql
-```
-
-Para reiniciar la base desde cero:
+Borrar la base si existe, crearla y aplicar esquemas 001 - 007:
 
 ```bash 
-dropdb --if-exists bodegas_del_atuel
-createdb -E UTF8 -T template0 bodegas_del_atuel
-psql -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f db/migrations/001_esquema.sql
+dropdb -U postgres --if-exists bodegas_del_atuel
+createdb -U postgres -E UTF8 -T template0 bodegas_del_atuel
+psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f db/migrations/001_esquema.sql
 ```
 
 > **Atención:** `dropdb` elimina todos los datos de la base. Usarlo solo en desarrollo o hacer un backup antes. 
+
+
+### Cómo saber que salió bien
+
+El script corre dentro de una transacción: termina con `COMMIT`, y si aparece algún `ERROR` se detiene y no se crea nada.
+
+Conectarse a la base:
+
+```bash
+psql -U postgres -d bodegas_del_atuel
+```
+
+y verificar:
+
+| Comando | Qué debe mostrar |
+|---|---|
+| `\dt` | Las 30 tablas del esquema |
+| `\d bodega` | Columnas, tipos y constraints de la tabla (se puede repetir con cualquier otra, por ejemplo `\d finca`) |
+| `\dD` | Los dominios: `cuit_dominio` y `cp_dominio` |
+| `\dT` | Los tipos: `tipo_vino`, `tipo_cliente`, `tipo_cepa`, `tipo_empleado`, `tipo_estado` y `dia_semana` (también aparecen los dominios) |
+
+Salir de `psql` con `\q`.
 
 ---
 
