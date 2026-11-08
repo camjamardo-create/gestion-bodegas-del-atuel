@@ -102,7 +102,8 @@ CREATE TABLE empleado (
         FOREIGN KEY (id_sala) REFERENCES sala_venta (id),
     
     CONSTRAINT uk_empleado_cuit_tipo
-        UNIQUE (cuit, tipo)
+        UNIQUE (cuit, tipo) -- UK requerida como destino de la FK (cuit_encargado, tipo_encargado) de localidad
+                            -- (no es una regla de negocio)
 );
 
 -- agregamos la fk a encargado en la tabla localidad para terminarla
