@@ -18,10 +18,10 @@ LANGUAGE sql
 IMMUTABLE
 AS $$
     SELECT CASE p_tipo_cliente
-        WHEN 'cliente_comun' THEN RETURN 0.00;
-        WHEN 'socio_club' THEN RETURN 0.10;
-        WHEN 'distribuidor' THEN RETURN 0.20;
-        WHEN 'exportador' THEN RETURN 0.30;
+        WHEN 'cliente_comun' THEN 0.00;
+        WHEN 'socio_club' THEN 0.10;
+        WHEN 'distribuidor' THEN 0.20;
+        WHEN 'exportador' THEN 0.30;
     END;
 $$;
 
@@ -57,7 +57,7 @@ AS $$
     FROM renglon_comprobante rc
     --limita la suma a los renglones de ese comprobante
     WHERE rc.numero_comprobante = p_numero_comprobante;
-$$
+$$;
 
 COMMENT ON FUNCTION fn_total_comprobante(integer) IS
 'Calcula el total del comprobante con descuento aplicado';
@@ -73,7 +73,7 @@ COMMENT ON FUNCTION fn_total_comprobante(integer) IS
 --volatilidad: STABLE (lee datos, no los modifica)
 
 --- ===============================================================================
-CREATE OR REPLACE FUNCTION fn_stock_sala(p_if_sala integer, p_codigo_vino integer)
+CREATE OR REPLACE FUNCTION fn_stock_sala(p_id_sala integer, p_codigo_vino integer)
 RETURNS integer
 LANGUAGE sql
 STABLE
