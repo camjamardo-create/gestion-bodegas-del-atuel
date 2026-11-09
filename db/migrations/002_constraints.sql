@@ -101,7 +101,7 @@ ALTER TABLE renglon_comprobante
     ADD CONSTRAINT ck_renglon_comprobante_precio_positivo
         CHECK (precio_unitario > 0);
 
--- RN-09 -> El stock nunca es negativo (puede ser 0).
+-- RN-09 -> El stock nunca es negativo 
 ALTER TABLE stock_deposito
     ADD CONSTRAINT ck_stock_deposito_cantidad_no_negativa
         CHECK (cantidad >= 0);
