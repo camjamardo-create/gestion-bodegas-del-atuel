@@ -2,6 +2,8 @@
 -- TPI Base de Datos - Bodegas del Atuel
 -- Etapa 1: tipos, dominios, tablas, PK y FK
 
+SET client_encoding = 'UTF8';
+
 BEGIN; 
 
 -- 1. Dominios y tipos propios
