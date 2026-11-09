@@ -1,27 +1,230 @@
 -- 002_constraints.sql
 -- TPI Base de Datos - Bodegas del Atuel
 -- Etapa 2.1: UNIQUE, CHECK, DEFAULT y acciones referenciales
---
--- Criterio general para las acciones referenciales:
---   * ON DELETE RESTRICT en datos maestros y en movimientos con historia
---     (no se borra un maestro que todavia tiene dependencias).
---   * ON DELETE CASCADE solo en filas de detalle que no existen sin su
---     cabecera (renglones, subtipos, composiciones, stock, coberturas).
---   * ON UPDATE CASCADE en claves naturales (cuit, codigo_postal, numero de
---     parcela) para propagar correcciones.
---   * ON UPDATE RESTRICT en claves subrogadas (IDENTITY), que no se corrigen
---     a mano.
 
 SET client_encoding = 'UTF8';
-
 BEGIN;
 
--- ============================================================================
--- 1. Acciones referenciales (ON UPDATE / ON DELETE) de cada FK
--- ============================================================================
+--- ===============================================================================
+---  1. UNIQUE
 
--- No se elimina una localidad con salas de venta asociadas.
--- Si cambia el codigo postal, se propaga a sus salas.
+-- Hay una única combinación de tipo_documento y numero_documento en cliente
+ALTER TABLE cliente
+    ADD CONSTRAINT uk_cliente_tipo_num_doc
+        UNIQUE (tipo_documento, numero_documento);
+
+-- Una parcela se cosecha como maximo una vez por campaña
+-- "por cada campaña, hay una unica parcela perteneciente a una finca que genera un lote"
+ALTER TABLE lote
+    ADD CONSTRAINT uk_lote_parcela_finca_campaña
+        UNIQUE (id_finca, numero_parcela, campaña);
+
+-- Un mismo nombre de vino se distingue por su añada y volumen
+ALTER TABLE vino
+    ADD CONSTRAINT uk_vino_nombre_añada_volumen
+        UNIQUE (nombre, añada, volumen_ml);
+
+-- El cuit de cada transportista es unico a nivel global
+ALTER TABLE transportista
+    ADD CONSTRAINT uk_transportista_cuit
+        UNIQUE (cuit);
+
+
+--- ===============================================================================
+---  2.1. CHECK propuestos por el TPI
+
+-- RN-01 -> El precio del vino siempre es mayor que 0
+ALTER TABLE vino
+    ADD CONSTRAINT ck_vino_precio_positivo
+        CHECK (precio > 0),
+
+-- RN-15 -> La graduación alcoholica esta entre 5 y 20
+    ADD CONSTRAINT ck_vino_graduacion
+        CHECK (graduacion BETWEEN 5 AND 20);
+
+-- RN-15 -> Cantidades, superficies, kilos y precios son siempre positivos.
+ALTER TABLE empleado
+    ADD CONSTRAINT ck_salario_positivo
+        CHECK (salario > 0);
+
+ALTER TABLE comprobante
+    ADD CONSTRAINT ck_comprobante_total_no_negativo
+        CHECK (total >= 0),
+
+    ADD CONSTRAINT ck_comprobante_subtotal_no_negativo
+        CHECK (subtotal >= 0),
+
+    ADD CONSTRAINT ck_comprobante_descuento_total_no_negativo
+        CHECK (descuento_total >= 0);
+
+ALTER TABLE auditoria_precio
+    ADD CONSTRAINT ck_auditoria_precio_nuevo_positivo
+        CHECK (precio_nuevo > 0),
+
+    ADD CONSTRAINT ck_auditoria_precio_anterior_positivo
+        CHECK (precio_anterior > 0);
+
+ALTER TABLE renglon_ingreso
+    ADD CONSTRAINT ck_renglon_ingreso_cantidad_positiva
+        CHECK (cantidad > 0);
+
+ALTER TABLE analisis_calidad
+    ADD CONSTRAINT ck_analisis_ph
+        CHECK (ph BETWEEN 0 AND 14), -- El pH es una escala de 0 a 14
+
+    ADD CONSTRAINT ck_analisis_brix
+        CHECK (brix > 0 AND brix <= 100), -- El grado Brix es un porcentaje de sólidos solubles
+
+    ADD CONSTRAINT ck_analisis_acidez
+        CHECK (acidez > 0);
+
+ALTER TABLE lote
+    ADD CONSTRAINT ck_lote_kg_cosecha_positivo
+        CHECK (kg_cosecha > 0);
+
+ALTER TABLE parcela
+    ADD CONSTRAINT ck_parcela_superficie_positiva
+        CHECK (superficie > 0);
+
+ALTER TABLE finca
+    ADD CONSTRAINT ck_finca_superficie_positiva
+        CHECK (superficie > 0);
+
+ALTER TABLE renglon_transferencia
+    ADD CONSTRAINT ck_renglon_transferencia_cantidad_positiva
+        CHECK (cantidad > 0);
+
+ALTER TABLE renglon_comprobante
+    ADD CONSTRAINT ck_renglon_comprobante_cantidad_positiva
+        CHECK (cantidad > 0),
+
+    ADD CONSTRAINT ck_renglon_comprobante_precio_positivo
+        CHECK (precio_unitario > 0);
+
+-- RN-09 -> El stock nunca es negativo (puede ser 0).
+ALTER TABLE stock_deposito
+    ADD CONSTRAINT ck_stock_deposito_cantidad_no_negativa
+        CHECK (cantidad >= 0);
+
+ALTER TABLE stock_sala
+    ADD CONSTRAINT ck_stock_sala_cantidad_no_negativa
+        CHECK (cantidad >= 0);
+
+-- RN-06 -> El descuento especial es una fraccion entre 0 y 1.
+-- NULL significa "usar el descuento base del tipo".
+ALTER TABLE exportador
+    ADD CONSTRAINT ck_exportador_descuento_rango
+        CHECK (descuento_especial IS NULL OR descuento_especial BETWEEN 0 AND 1);
+
+-- RN-07 -> El vencimiento de un permiso es posterior a la emisión
+ALTER TABLE permiso
+    ADD CONSTRAINT ck_permiso_fechas
+        CHECK (fecha_vencimiento > fecha_emision);
+
+
+---  2.2. CHECK de nuestro diseño
+
+-- Volumenes de vino restringidos
+ALTER TABLE vino
+    ADD CONSTRAINT ck_vino_volumen
+        CHECK (volumen_ml IN (187, 375, 750, 1500, 3000)),
+
+-- Añada controlada
+    ADD CONSTRAINT ck_vino_añada
+        CHECK (añada BETWEEN 1990 AND 2100);
+
+-- Año plantacion parcela controlado
+ALTER TABLE parcela
+    ADD CONSTRAINT ck_parcela_año_plantacion
+        CHECK (año_plantacion BETWEEN 1990 AND 2100);
+
+-- Composicion positiva y a lo sumo 100 (la suma igual a 100 va en un trigger)
+ALTER TABLE composicion
+    ADD CONSTRAINT ck_composicion_porcentaje_rango
+        CHECK (porcentaje > 0 AND porcentaje <= 100);
+
+-- Check total de comprobante (se calcula en un trigger pero chequeamos)
+ALTER TABLE comprobante
+    ADD CONSTRAINT ck_comprobante_total_calculo
+        CHECK (total = subtotal - descuento_total);
+
+-- RN-06 -> El descuento aplicado es una fraccion entre 0 y 1
+ALTER TABLE comprobante
+    ADD CONSTRAINT ck_comprobante_descuento_aplicado
+        CHECK (descuento_aplicado BETWEEN 0 AND 1);
+
+-- Cliente con nombre y apellido o con razon social
+ALTER TABLE cliente
+    ADD CONSTRAINT ck_cliente_datos
+        CHECK (
+            (tipo IN ('cliente_comun','socio_club')
+                AND nombre IS NOT NULL AND apellido IS NOT NULL)
+            OR
+            (tipo IN ('distribuidor','exportador')
+                AND razon_social IS NOT NULL)
+        );
+
+-- Cada subtabla fija su tipo: garantiza la disyuncion de la jerarquia
+ALTER TABLE cliente_comun
+    ADD CONSTRAINT ck_cliente_comun_tipo
+        CHECK (tipo = 'cliente_comun');
+
+ALTER TABLE socio_club
+    ADD CONSTRAINT ck_socio_club_tipo
+        CHECK (tipo = 'socio_club');
+
+ALTER TABLE distribuidor
+    ADD CONSTRAINT ck_distribuidor_tipo
+        CHECK (tipo = 'distribuidor');
+
+ALTER TABLE exportador
+    ADD CONSTRAINT ck_exportador_tipo
+        CHECK (tipo = 'exportador');
+
+
+--- ===============================================================================
+--- 3. Valores por defecto (DEFAULT)
+
+-- RN-10 / RN-11 -> Todo ingreso y toda transferencia nacen en confeccion
+ALTER TABLE ingreso
+    ALTER COLUMN estado SET DEFAULT 'en_confeccion';
+
+ALTER TABLE transferencia
+    ALTER COLUMN estado SET DEFAULT 'en_confeccion';
+
+-- RN-11 -> La transferencia se confecciona con la fecha actual
+ALTER TABLE transferencia
+    ALTER COLUMN fecha_confeccion SET DEFAULT CURRENT_DATE;
+
+-- El alta del cliente se registra con la fecha actual
+ALTER TABLE cliente
+    ALTER COLUMN fecha_alta SET DEFAULT CURRENT_DATE;
+
+-- El stock arranca en cero hasta que se registren movimientos
+ALTER TABLE stock_deposito
+    ALTER COLUMN cantidad SET DEFAULT 0;
+
+ALTER TABLE stock_sala
+    ALTER COLUMN cantidad SET DEFAULT 0;
+
+-- Se registra quien hizo el cambio de precio (lo hace el trigger pero se garantiza)
+ALTER TABLE auditoria_precio
+    ALTER COLUMN usuario SET DEFAULT current_user;
+
+-- Subtotal, descuento y total del comprobante inician en 0. Se cumple el check desde el primer momento
+ALTER TABLE comprobante
+    ALTER COLUMN subtotal SET DEFAULT 0,
+    ALTER COLUMN descuento_aplicado SET DEFAULT 0,
+    ALTER COLUMN descuento_total SET DEFAULT 0,
+    ALTER COLUMN total SET DEFAULT 0;
+
+
+--- ===============================================================================
+------- 4. Acciones referenciales a los eventos ON UPDATE, ON DELETE en cada FK
+
+
+-- No se elimina una localidad con salas de venta asociadas
+-- Si cambia el codigo postal, se propaga en sus salas
 ALTER TABLE sala_venta
     DROP CONSTRAINT fk_sala_venta_localidad,
     ADD CONSTRAINT fk_sala_venta_localidad
@@ -29,8 +232,8 @@ ALTER TABLE sala_venta
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
 
--- No se elimina una sala con empleados asociados.
--- No se actualiza manualmente el id de sala de venta.
+-- No se elimina una sala con empleados asociados
+-- No se actualiza manualmente el id de sala de venta
 ALTER TABLE empleado
     DROP CONSTRAINT fk_empleado_sala_venta,
     ADD CONSTRAINT fk_empleado_sala_venta
@@ -38,9 +241,9 @@ ALTER TABLE empleado
         ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- No se puede eliminar un encargado con una localidad a su cargo.
--- Si se modifica el cuit del empleado, se propaga a localidad.
--- Si se modifica el tipo de empleado, el CHECK de localidad lo rechaza.
+-- No se puede eliminar un encargado con una localidad a su cargo
+-- Si se modifica el cuit de empleado, se propaga a localidad
+-- Si se modifica el tipo de empleado, CHECK de localidad lo rechaza
 ALTER TABLE localidad
     DROP CONSTRAINT fk_localidad_encargado,
     ADD CONSTRAINT fk_localidad_encargado
@@ -49,26 +252,25 @@ ALTER TABLE localidad
         ON UPDATE CASCADE
         DEFERRABLE INITIALLY DEFERRED;
 
--- Si se elimina un transportista, se eliminan sus coberturas.
--- No se actualiza manualmente el codigo de transportista (IDENTITY).
+-- Si se elimina un transportista, se eliminan sus coberturas
+-- No se actualiza manualmente el código de transportista (columna GENERATED ALWAYS)
 ALTER TABLE transportista_cubre_localidad
     DROP CONSTRAINT fk_transportista_cubre_localidad_transportista,
     ADD CONSTRAINT fk_transportista_cubre_localidad_transportista
         FOREIGN KEY (codigo_transportista) REFERENCES transportista (codigo)
         ON DELETE CASCADE
-        ON UPDATE RESTRICT;
+        ON UPDATE RESTRICT,
 
--- Si se elimina una localidad, se eliminan las coberturas sobre ella.
--- Si cambia el codigo postal de localidad, se propaga a las coberturas.
-ALTER TABLE transportista_cubre_localidad
+-- Si se elimina una localidad, se eliminan las coberturas sobre ella
+-- Si cambia el código postal de localidad, se propaga a las coberturas
     DROP CONSTRAINT fk_transportista_cubre_localidad_localidad,
     ADD CONSTRAINT fk_transportista_cubre_localidad_localidad
         FOREIGN KEY (codigo_postal_localidad) REFERENCES localidad (codigo_postal)
         ON DELETE CASCADE
         ON UPDATE CASCADE;
 
--- No se elimina un transportista con ingresos asociados (RN-14).
--- No se actualiza manualmente el codigo de transportista (IDENTITY).
+-- No se elimina un transportista con ingresos asociados
+-- No se actualiza el codigo de transportista
 ALTER TABLE ingreso
     DROP CONSTRAINT fk_ingreso_transportista,
     ADD CONSTRAINT fk_ingreso_transportista
@@ -76,8 +278,8 @@ ALTER TABLE ingreso
         ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- No se elimina una bodega con ingresos asociados.
--- Si cambia el cuit de bodega, se propaga a sus ingresos.
+-- No se elimina una bodega con ingresos asociados
+-- Si cambia el cuit de la bodega (clave natural), se propaga a sus ingresos
 ALTER TABLE ingreso
     DROP CONSTRAINT fk_ingreso_bodega,
     ADD CONSTRAINT fk_ingreso_bodega
@@ -85,8 +287,8 @@ ALTER TABLE ingreso
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
 
--- No se elimina una localidad con clientes asociados.
--- Si cambia el codigo postal de localidad, se propaga a sus clientes.
+-- No se elimina una localidad con clientes asociados
+-- Si cambia el codigo postal de localidad, se propaga a sus clientes
 ALTER TABLE cliente
     DROP CONSTRAINT fk_cliente_localidad,
     ADD CONSTRAINT fk_cliente_localidad
@@ -94,8 +296,8 @@ ALTER TABLE cliente
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
 
--- Si se elimina un cliente, se elimina su fila de subtipo.
--- No se actualiza manualmente el id de cliente ni se cambia su tipo.
+-- Si se elimina un cliente, se elimina su fila de subtipo
+-- No se actualiza el id de cliente ni se cambia su tipo
 ALTER TABLE cliente_comun
     DROP CONSTRAINT fk_cliente_comun_cliente,
     ADD CONSTRAINT fk_cliente_comun_cliente
@@ -124,8 +326,8 @@ ALTER TABLE exportador
         ON DELETE CASCADE
         ON UPDATE RESTRICT;
 
--- Si se elimina un exportador, se eliminan sus permisos.
--- Si se corrige el id de un exportador, se propaga a sus permisos.
+-- Si se elimina un exportador, se eliminan sus permisos
+-- Si se corrige el id de un exportador, se propaga a sus permisos
 ALTER TABLE permiso
     DROP CONSTRAINT fk_permiso_exportador,
     ADD CONSTRAINT fk_permiso_exportador
@@ -133,8 +335,9 @@ ALTER TABLE permiso
         ON DELETE CASCADE
         ON UPDATE CASCADE;
 
--- Una parcela no existe sin su finca (entidad debil).
--- No se actualiza manualmente el id de finca (IDENTITY).
+
+-- Una parcela no existe sin su finca (entidad debil)
+-- No se actualiza manualmente el id de finca (clave subrogada)
 ALTER TABLE parcela
     DROP CONSTRAINT fk_parcela_finca,
     ADD CONSTRAINT fk_parcela_finca
@@ -142,8 +345,8 @@ ALTER TABLE parcela
         ON DELETE CASCADE
         ON UPDATE RESTRICT;
 
--- No se elimina una cepa plantada en alguna parcela.
--- No se actualiza manualmente el id de cepa (IDENTITY).
+-- No se elimina una cepa plantada en alguna parcela
+-- No se actualiza manualmente el id de cepa (clave subrogada)
 ALTER TABLE parcela
     DROP CONSTRAINT fk_parcela_cepa,
     ADD CONSTRAINT fk_parcela_cepa
@@ -151,8 +354,8 @@ ALTER TABLE parcela
         ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- No se elimina una bodega con lotes entregados.
--- Si cambia el cuit de bodega, se propaga a sus lotes.
+-- No se elimina una bodega con lotes entregados
+-- Si cambia el cuit de bodega, se propaga a sus lotes
 ALTER TABLE lote
     DROP CONSTRAINT fk_lote_bodega,
     ADD CONSTRAINT fk_lote_bodega
@@ -160,8 +363,8 @@ ALTER TABLE lote
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
 
--- No se elimina una parcela con lotes cosechados.
--- Si se corrige el numero de parcela, se propaga a sus lotes.
+-- No se elimina una parcela con lotes cosechados
+-- Si se corrige el numero de parcela, se propaga a sus lotes
 ALTER TABLE lote
     DROP CONSTRAINT fk_lote_parcela,
     ADD CONSTRAINT fk_lote_parcela
@@ -169,8 +372,8 @@ ALTER TABLE lote
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
 
--- Si se elimina un lote, se eliminan sus analisis de calidad.
--- No se actualiza manualmente el numero de lote (IDENTITY).
+-- Si se elimina un lote se eliminan sus analisis asociados
+-- No se actualiza manualmente el numero de lote (clave subrogada)
 ALTER TABLE analisis_calidad
     DROP CONSTRAINT fk_analisis_calidad_lote,
     ADD CONSTRAINT fk_analisis_calidad_lote
@@ -178,8 +381,8 @@ ALTER TABLE analisis_calidad
         ON DELETE CASCADE
         ON UPDATE RESTRICT;
 
--- No se elimina una bodega con vinos asociados (RN-14).
--- Si cambia el cuit de bodega, se propaga a sus vinos.
+-- No se elimina una bodega con vinos asociados
+-- Si cambia el cuit de bodega, se propaga a sus vinos
 ALTER TABLE vino
     DROP CONSTRAINT fk_vino_bodega,
     ADD CONSTRAINT fk_vino_bodega
@@ -187,53 +390,50 @@ ALTER TABLE vino
         ON DELETE RESTRICT
         ON UPDATE CASCADE;
 
--- Si se elimina un vino, su composicion pierde sentido y se elimina.
--- No se actualiza manualmente el codigo de vino (IDENTITY).
+-- Si se elimina un vino, se eliminan sus filas de composicion
+-- No se actualiza manualmente el codigo de vino
 ALTER TABLE composicion
     DROP CONSTRAINT fk_composicion_vino,
     ADD CONSTRAINT fk_composicion_vino
         FOREIGN KEY (codigo_vino) REFERENCES vino (codigo)
         ON DELETE CASCADE
-        ON UPDATE RESTRICT;
+        ON UPDATE RESTRICT,
 
--- No se elimina una cepa que compone uno o mas vinos.
--- No se actualiza manualmente el id de cepa (IDENTITY).
-ALTER TABLE composicion
+-- No se elimina una cepa que compone algun vino
     DROP CONSTRAINT fk_composicion_cepa,
     ADD CONSTRAINT fk_composicion_cepa
         FOREIGN KEY (id_cepa) REFERENCES cepa (id)
         ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- Si se elimina un vino, su fila de stock del deposito pierde sentido.
--- No se actualiza manualmente el codigo de vino (IDENTITY).
+-- No se elimina un vino con registro de stock en el depósito
+-- No se actualiza el codigo de vino
 ALTER TABLE stock_deposito
     DROP CONSTRAINT fk_stock_deposito_vino,
     ADD CONSTRAINT fk_stock_deposito_vino
         FOREIGN KEY (codigo_vino) REFERENCES vino (codigo)
-        ON DELETE CASCADE
+        ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- Si se elimina un vino, se eliminan sus maridajes recomendados.
--- No se actualiza manualmente el codigo de vino (IDENTITY).
+-- Si se elimina un vino, se eliminan sus asociaciones con maridajes
+-- No se actualiza el codigo de vino
 ALTER TABLE vino_maridaje
     DROP CONSTRAINT fk_vino_maridaje_vino,
     ADD CONSTRAINT fk_vino_maridaje_vino
         FOREIGN KEY (codigo_vino) REFERENCES vino (codigo)
         ON DELETE CASCADE
-        ON UPDATE RESTRICT;
+        ON UPDATE RESTRICT,
 
--- No se elimina un maridaje que este recomendado para algun vino.
--- No se actualiza manualmente el id de maridaje (IDENTITY).
-ALTER TABLE vino_maridaje
+-- No se elimina un maridaje asociado a algun vino
+-- No se actualiza el id de maridaje
     DROP CONSTRAINT fk_vino_maridaje_maridaje,
     ADD CONSTRAINT fk_vino_maridaje_maridaje
         FOREIGN KEY (id_maridaje) REFERENCES maridaje (id)
         ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- No se elimina un vino con movimientos de ingreso (RN-14).
--- No se actualiza manualmente el codigo de vino (IDENTITY).
+-- No se elimina un vino con renglones de ingreso asociados
+-- No se actualiza el codigo de vino
 ALTER TABLE renglon_ingreso
     DROP CONSTRAINT fk_renglon_ingreso_vino,
     ADD CONSTRAINT fk_renglon_ingreso_vino
@@ -241,8 +441,8 @@ ALTER TABLE renglon_ingreso
         ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- Si se elimina un ingreso, se eliminan sus renglones.
--- No se actualiza manualmente el codigo de ingreso (IDENTITY).
+-- Los renglones no existen sin su ingreso: se eliminan con el
+-- No se actualiza el codigo de ingreso
 ALTER TABLE renglon_ingreso
     DROP CONSTRAINT fk_renglon_ingreso_ingreso,
     ADD CONSTRAINT fk_renglon_ingreso_ingreso
@@ -250,35 +450,33 @@ ALTER TABLE renglon_ingreso
         ON DELETE CASCADE
         ON UPDATE RESTRICT;
 
--- La auditoria de precio se conserva: no se elimina un vino auditado.
--- No se actualiza manualmente el codigo de vino (IDENTITY).
+-- Si se elimina un vino, se eliminan sus registros de auditoria
+-- No se actualiza el codigo de vino
 ALTER TABLE auditoria_precio
     DROP CONSTRAINT fk_auditoria_precio_vino,
     ADD CONSTRAINT fk_auditoria_precio_vino
         FOREIGN KEY (codigo_vino) REFERENCES vino (codigo)
-        ON DELETE RESTRICT
+        ON DELETE CASCADE
         ON UPDATE RESTRICT;
 
--- Si se elimina una sala, se elimina su stock.
--- No se actualiza manualmente el id de sala (IDENTITY).
+-- Una sala no se elimina si tiene registros de stock
+-- No se actualiza el id de sala
 ALTER TABLE stock_sala
     DROP CONSTRAINT fk_stock_sala_sala,
     ADD CONSTRAINT fk_stock_sala_sala
         FOREIGN KEY (id_sala) REFERENCES sala_venta (id)
-        ON DELETE CASCADE
-        ON UPDATE RESTRICT;
+        ON DELETE RESTRICT
+        ON UPDATE RESTRICT,
 
--- Si se elimina un vino, su stock en salas pierde sentido.
--- No se actualiza manualmente el codigo de vino (IDENTITY).
-ALTER TABLE stock_sala
+-- No se elimina un vino con registros de stock en alguna sala
     DROP CONSTRAINT fk_stock_sala_vino,
     ADD CONSTRAINT fk_stock_sala_vino
         FOREIGN KEY (codigo_vino) REFERENCES vino (codigo)
-        ON DELETE CASCADE
+        ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- No se elimina un cliente con comprobantes asociados.
--- No se actualiza manualmente el id de cliente (IDENTITY).
+-- No se elimina un cliente con comprobantes asociados
+-- No se actualiza el id de cliente
 ALTER TABLE comprobante
     DROP CONSTRAINT fk_comprobante_cliente,
     ADD CONSTRAINT fk_comprobante_cliente
@@ -286,8 +484,8 @@ ALTER TABLE comprobante
         ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- No se elimina una sala con comprobantes asociados.
--- No se actualiza manualmente el id de sala (IDENTITY).
+-- No se elimina una sala con comprobantes asociados
+-- No se actualiza el id de sala
 ALTER TABLE comprobante
     DROP CONSTRAINT fk_comprobante_sala,
     ADD CONSTRAINT fk_comprobante_sala
@@ -295,8 +493,8 @@ ALTER TABLE comprobante
         ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- Si se elimina un comprobante, se eliminan sus renglones.
--- No se actualiza manualmente el numero de comprobante (IDENTITY).
+-- Si se elimina un comprobante, se eliminan sus renglones
+-- No se actualiza el numero de comprobante
 ALTER TABLE renglon_comprobante
     DROP CONSTRAINT fk_renglon_comprobante_comprobante,
     ADD CONSTRAINT fk_renglon_comprobante_comprobante
@@ -304,8 +502,8 @@ ALTER TABLE renglon_comprobante
         ON DELETE CASCADE
         ON UPDATE RESTRICT;
 
--- No se elimina un vino con movimientos de venta (RN-14).
--- No se actualiza manualmente el codigo de vino (IDENTITY).
+-- No se elimina un vino con renglones de comprobante asociados
+-- No se actualiza el codigo de vino
 ALTER TABLE renglon_comprobante
     DROP CONSTRAINT fk_renglon_comprobante_vino,
     ADD CONSTRAINT fk_renglon_comprobante_vino
@@ -313,8 +511,8 @@ ALTER TABLE renglon_comprobante
         ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- No se elimina una sala con transferencias asociadas.
--- No se actualiza manualmente el id de sala (IDENTITY).
+-- No se elimina una sala de venta con transferencias asociadas
+-- No se actualiza el id de sala
 ALTER TABLE transferencia
     DROP CONSTRAINT fk_transferencia_sala_venta,
     ADD CONSTRAINT fk_transferencia_sala_venta
@@ -322,8 +520,8 @@ ALTER TABLE transferencia
         ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- Si se elimina una transferencia, se eliminan sus renglones.
--- No se actualiza manualmente el numero de transferencia (IDENTITY).
+-- Si se elimina una transferencia, se eliminan sus renglones
+-- No se actualiza el numero de transferencia
 ALTER TABLE renglon_transferencia
     DROP CONSTRAINT fk_renglon_transferencia_transferencia,
     ADD CONSTRAINT fk_renglon_transferencia_transferencia
@@ -331,8 +529,8 @@ ALTER TABLE renglon_transferencia
         ON DELETE CASCADE
         ON UPDATE RESTRICT;
 
--- No se elimina un vino con movimientos de transferencia (RN-14).
--- No se actualiza manualmente el codigo de vino (IDENTITY).
+-- No se elimina un vino con renglones de transferencia asociados
+-- No se actualiza el codigo de vino
 ALTER TABLE renglon_transferencia
     DROP CONSTRAINT fk_renglon_transferencia_vino,
     ADD CONSTRAINT fk_renglon_transferencia_vino
@@ -340,173 +538,10 @@ ALTER TABLE renglon_transferencia
         ON DELETE RESTRICT
         ON UPDATE RESTRICT;
 
--- ============================================================================
--- 2. Restricciones UNIQUE adicionales a las claves primarias
--- ============================================================================
 
--- Un mismo nombre de vino se distingue por añada y presentacion.
-ALTER TABLE vino
-    ADD CONSTRAINT uk_vino_nombre_anada_volumen
-        UNIQUE (nombre, añada, volumen_ml);
 
--- Una parcela se cosecha como maximo una vez por campaña (RN-04).
-ALTER TABLE lote
-    ADD CONSTRAINT uk_lote_parcela_campana
-        UNIQUE (id_finca, numero_parcela, campaña);
 
--- El CUIT identifica al transportista aunque su PK sea el codigo subrogado.
-ALTER TABLE transportista
-    ADD CONSTRAINT uk_transportista_cuit
-        UNIQUE (cuit);
 
--- El nombre de la cepa es unico dentro del catalogo real.
-ALTER TABLE cepa
-    ADD CONSTRAINT uk_cepa_nombre
-        UNIQUE (nombre);
 
--- El nombre del maridaje es unico dentro del catalogo.
-ALTER TABLE maridaje
-    ADD CONSTRAINT uk_maridaje_nombre
-        UNIQUE (nombre);
-
--- ============================================================================
--- 3. Restricciones CHECK
--- ============================================================================
-
--- El precio de venta es unico para la red y siempre positivo (RN-01).
-ALTER TABLE vino
-    ADD CONSTRAINT chk_vino_precio_positivo
-        CHECK (precio > 0);
-
--- La graduacion alcoholica esta entre 5 y 20 grados (RN-15).
-ALTER TABLE vino
-    ADD CONSTRAINT chk_vino_graduacion_rango
-        CHECK (graduacion BETWEEN 5 AND 20);
-
--- La presentacion y la añada son valores validos.
-ALTER TABLE vino
-    ADD CONSTRAINT chk_vino_volumen_positivo
-        CHECK (volumen_ml > 0);
-
-ALTER TABLE vino
-    ADD CONSTRAINT chk_vino_anada_rango
-        CHECK (añada BETWEEN 1900 AND 2100);
-
--- Superficies, kilos y cantidades siempre positivos (RN-15).
-ALTER TABLE finca
-    ADD CONSTRAINT chk_finca_superficie_positiva
-        CHECK (superficie > 0);
-
-ALTER TABLE parcela
-    ADD CONSTRAINT chk_parcela_superficie_positiva
-        CHECK (superficie > 0);
-
-ALTER TABLE lote
-    ADD CONSTRAINT chk_lote_kg_positivo
-        CHECK (kg_cosecha > 0);
-
--- Valores fisicamente posibles para un analisis de calidad.
-ALTER TABLE analisis_calidad
-    ADD CONSTRAINT chk_analisis_ph_rango
-        CHECK (ph BETWEEN 0 AND 14);
-
-ALTER TABLE analisis_calidad
-    ADD CONSTRAINT chk_analisis_brix_positivo
-        CHECK (brix >= 0);
-
-ALTER TABLE analisis_calidad
-    ADD CONSTRAINT chk_analisis_acidez_positiva
-        CHECK (acidez > 0);
-
--- El permiso vence despues de su emision (RN-07, CHECK entre columnas).
-ALTER TABLE permiso
-    ADD CONSTRAINT chk_permiso_fechas
-        CHECK (fecha_vencimiento > fecha_emision);
-
--- Cada cepa aporta un porcentaje de corte positivo y a lo sumo 100.
-ALTER TABLE composicion
-    ADD CONSTRAINT chk_composicion_porcentaje
-        CHECK (porcentaje > 0 AND porcentaje <= 100);
-
--- El stock nunca es negativo (RN-09).
-ALTER TABLE stock_deposito
-    ADD CONSTRAINT chk_stock_deposito_cantidad
-        CHECK (cantidad >= 0);
-
-ALTER TABLE stock_sala
-    ADD CONSTRAINT chk_stock_sala_cantidad
-        CHECK (cantidad >= 0);
-
--- Las cantidades de renglones son positivas (RN-15).
-ALTER TABLE renglon_ingreso
-    ADD CONSTRAINT chk_renglon_ingreso_cantidad
-        CHECK (cantidad > 0);
-
-ALTER TABLE renglon_transferencia
-    ADD CONSTRAINT chk_renglon_transferencia_cantidad
-        CHECK (cantidad > 0);
-
-ALTER TABLE renglon_comprobante
-    ADD CONSTRAINT chk_renglon_comprobante_cantidad
-        CHECK (cantidad > 0);
-
-ALTER TABLE renglon_comprobante
-    ADD CONSTRAINT chk_renglon_comprobante_precio
-        CHECK (precio_unitario > 0);
-
--- Importes no negativos y descuento dentro del rango [0, 1].
-ALTER TABLE comprobante
-    ADD CONSTRAINT chk_comprobante_importes
-        CHECK (subtotal >= 0 AND total >= 0 AND descuento_total >= 0);
-
-ALTER TABLE comprobante
-    ADD CONSTRAINT chk_comprobante_descuento_aplicado
-        CHECK (descuento_aplicado BETWEEN 0 AND 1);
-
--- El descuento total nunca supera al subtotal (CHECK entre columnas).
-ALTER TABLE comprobante
-    ADD CONSTRAINT chk_comprobante_descuento_total
-        CHECK (descuento_total <= subtotal);
-
--- El salario es positivo.
-ALTER TABLE empleado
-    ADD CONSTRAINT chk_empleado_salario_positivo
-        CHECK (salario > 0);
-
--- La temperatura de servicio es un valor razonable.
-ALTER TABLE maridaje
-    ADD CONSTRAINT chk_maridaje_temperatura
-        CHECK (temperatura_servicio BETWEEN -10 AND 40);
-
--- El descuento especial del exportador esta en el rango [0, 1] (RN-06).
-ALTER TABLE exportador
-    ADD CONSTRAINT chk_exportador_descuento
-        CHECK (descuento_especial BETWEEN 0 AND 1);
-
--- ============================================================================
--- 4. Valores por defecto
--- ============================================================================
-
--- Todo ingreso y toda transferencia nacen en confeccion (RN-10, RN-11).
-ALTER TABLE ingreso
-    ALTER COLUMN estado SET DEFAULT 'en_confeccion';
-
-ALTER TABLE transferencia
-    ALTER COLUMN estado SET DEFAULT 'en_confeccion';
-
--- La transferencia se confecciona con la fecha actual (RN-11).
-ALTER TABLE transferencia
-    ALTER COLUMN fecha_confeccion SET DEFAULT CURRENT_DATE;
-
--- El alta de un cliente se registra con la fecha actual.
-ALTER TABLE cliente
-    ALTER COLUMN fecha_alta SET DEFAULT CURRENT_DATE;
-
--- El stock arranca en cero hasta que se registren movimientos.
-ALTER TABLE stock_deposito
-    ALTER COLUMN cantidad SET DEFAULT 0;
-
-ALTER TABLE stock_sala
-    ALTER COLUMN cantidad SET DEFAULT 0;
 
 COMMIT;
