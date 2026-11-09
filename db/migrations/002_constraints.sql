@@ -114,7 +114,7 @@ ALTER TABLE stock_sala
 -- NULL significa "usar el descuento base del tipo"
 ALTER TABLE exportador
     ADD CONSTRAINT ck_exportador_descuento_rango
-        CHECK (descuento_especial IS NULL OR descuento_especial BETWEEN 0.30 AND 0.35);
+        CHECK (descuento_especial IS NULL OR descuento_especial=0.35);
 
 -- RN-07 -> El vencimiento de un permiso es posterior a la emisión
 ALTER TABLE permiso
