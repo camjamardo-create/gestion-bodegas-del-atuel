@@ -18,10 +18,10 @@ LANGUAGE sql
 IMMUTABLE
 AS $$
     SELECT CASE p_tipo_cliente
-        WHEN 'cliente_comun' THEN 0.00;
-        WHEN 'socio_club' THEN 0.10;
-        WHEN 'distribuidor' THEN 0.20;
-        WHEN 'exportador' THEN 0.30;
+        WHEN 'cliente_comun' THEN 0.00
+        WHEN 'socio_club' THEN 0.10
+        WHEN 'distribuidor' THEN 0.20
+        WHEN 'exportador' THEN 0.30
     END;
 $$;
 
