@@ -56,6 +56,7 @@ Borrar la base si existe, crearla y aplicar esquemas 001 - 007:
 dropdb -U postgres --if-exists bodegas_del_atuel
 createdb -U postgres -E UTF8 -T template0 bodegas_del_atuel
 psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f db/migrations/001_esquema.sql
+psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f db/migrations/002_constraints.sql 
 ```
 
 > **Atención:** `dropdb` elimina todos los datos de la base. Usarlo solo en desarrollo o hacer un backup antes. 
