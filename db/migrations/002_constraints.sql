@@ -110,11 +110,11 @@ ALTER TABLE stock_sala
     ADD CONSTRAINT ck_stock_sala_cantidad_no_negativa
         CHECK (cantidad >= 0);
 
--- RN-06 -> El descuento especial es una fraccion entre 0 y 1.
--- NULL significa "usar el descuento base del tipo".
+-- RN-06 -> El descuento especial es una fraccion entre 0.3 y 0.35.
+-- NULL significa "usar el descuento base del tipo"
 ALTER TABLE exportador
     ADD CONSTRAINT ck_exportador_descuento_rango
-        CHECK (descuento_especial IS NULL OR descuento_especial BETWEEN 0 AND 1);
+        CHECK (descuento_especial IS NULL OR descuento_especial BETWEEN 0.30 AND 0.35);
 
 -- RN-07 -> El vencimiento de un permiso es posterior a la emisión
 ALTER TABLE permiso
