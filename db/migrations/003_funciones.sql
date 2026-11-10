@@ -34,7 +34,7 @@ AS $$
                    WHEN 'socio_club' THEN 0.10
                    WHEN 'distribuidor' THEN 0.20
                    WHEN 'exportador' THEN COALASCE(e.descuento_especial, 0.30)
-                END;
+                END
             -- busca en la tabla cliente
             FROM cliente c
             -- trae la fila de exportador de ese cliente.
@@ -45,7 +45,7 @@ AS $$
 
 $$;
 
-COMMENT ON FUNCTION fn_descuento_cliente(tipo_cliente) IS
+COMMENT ON FUNCTION fn_descuento_cliente(integer) IS
 'devuelve el porcentaje de descuento segun tipo de cliente';
 
 --- ===============================================================================
@@ -167,7 +167,7 @@ AS $$
 $$;
 
 COMMENT ON FUNCTION fn_transicion_valida(tipo_estado, tipo_estado) IS
-'valida el circuito de estados en_confeccion -> terminado -> procesado':
+'valida el circuito de estados en_confeccion -> terminado -> procesado';
 
 
 COMMIT;
