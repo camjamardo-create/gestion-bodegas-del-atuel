@@ -30,7 +30,7 @@ herramientas que oculten el SQL.
 |   Integrante   |   Legajo   |   GitHub   |
 |   ----------   |   ------   |   ------   |
 | Jamardo, Camila | 10842 | [@camjamardo-create](https://github.com/camjamardo-create) |
-| Sirotiuk, Juliana | — | [@julisirotiuk](https://github.com/julisirotiuk) |
+| Sirotiuk, Juliana | 10939 | [@julisirotiuk](https://github.com/julisirotiuk) |
  
 ---
 
@@ -48,22 +48,60 @@ Para trabajar con el proyecto en local:
 
 ## Base de datos local
 
-Ejecutar desde la raíz del repositorio. 
+Ejecutar desde la raíz del repositorio.
 
-Borrar la base si existe, crearla y aplicar esquemas 001 - 007:
+### 1. Crear la base
 
-```bash 
+```bash
 dropdb -U postgres --if-exists bodegas_del_atuel
 createdb -U postgres -E UTF8 -T template0 bodegas_del_atuel
-psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f db/migrations/001_esquema.sql
 ```
 
-> **Atención:** `dropdb` elimina todos los datos de la base. Usarlo solo en desarrollo o hacer un backup antes. 
+> **Atención:** `dropdb` elimina todos los datos de la base. Usarlo solo en desarrollo o hacer un backup antes.
 
+### 2. Aplicar todas las migraciones
 
-### Cómo saber que salió bien
+Las migraciones deben ejecutarse en orden, desde `001` hasta `007`. No alcanza con ejecutar solo `001_esquema.sql`.
 
-El script corre dentro de una transacción: termina con `COMMIT`, y si aparece algún `ERROR` se detiene y no se crea nada.
+**Bash / Git Bash / WSL:**
+
+```bash
+    psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f "db/migrations/001_esquema.sql"
+    psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f "db/migrations/002_constraints.sql"
+    psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f "db/migrations/003_funciones.sql"
+    psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f "db/migrations/004_procedimientos.sql"
+    psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f "db/migrations/005_triggers.sql"
+    psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f "db/migrations/006_vistas.sql"
+    psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f "db/migrations/007_roles.sql"
+```
+
+### 3. Ejecutar los tests
+
+El archivo `tests/db_tests.sql` verifica las reglas de negocio RN-01 a RN-15 y los mecanismos de integridad de las migraciones.
+
+```bash
+psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f tests/db_tests.sql
+```
+
+El script:
+
+- Corre dentro de una transacción y termina con `ROLLBACK`, por lo que no deja datos de prueba.
+- Muestra un `NOTICE: OK ...` por cada caso que pasa.
+- Se detiene con un error si algún caso negativo no falla como se espera.
+- Puede volver a ejecutarse sobre la misma base sin limpiar datos.
+
+Al finalizar correctamente debe mostrarse:
+
+```text
+Todos los tests pasaron. Se ejecuta ROLLBACK para no dejar datos.
+ROLLBACK
+```
+
+> **Importante:** el archivo usa metacomandos de `psql` (`\set` y `\echo`). Ejecutarlo con `psql`, no desde el editor de consultas de DBeaver o pgAdmin.
+
+### Cómo saber que la base quedó bien
+
+Las migraciones corren con `ON_ERROR_STOP=1`: si aparece un `ERROR`, la ejecución se detiene y no se aplica la migración incompleta.
 
 Conectarse a la base:
 
@@ -92,4 +130,3 @@ ciclo lectivo 2026.
 
 «Bodegas del Atuel» es una empresa ficticia. Los datos utilizados son generados
 con fines exclusivamente académicos.
-
