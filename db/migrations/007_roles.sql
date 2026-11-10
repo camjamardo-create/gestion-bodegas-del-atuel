@@ -1,0 +1,2 @@
+-- 006_vistas.sql
+-- TPI Base de Datos - Bodegas del Atuel
