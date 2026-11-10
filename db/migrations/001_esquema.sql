@@ -150,6 +150,7 @@ CREATE TABLE cliente (
     razon_social VARCHAR(120),
     calle VARCHAR(60) NOT NULL,
     numero VARCHAR(10) NOT NULL,
+    estado_activo BOOLEAN NOT NULL,
     codigo_postal cp_dominio NOT NULL,
     tipo_documento VARCHAR(10) NOT NULL,
     numero_documento VARCHAR(20) NOT NULL,
