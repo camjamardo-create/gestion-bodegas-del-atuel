@@ -1,0 +1,41 @@
+﻿                                                                             QUERY PLAN                                                                             
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=4030.86..4030.92 rows=24 width=52) (actual time=12.665..15.342 rows=24.00 loops=1)
+   Sort Key: (sum(co.total)) DESC
+   Sort Method: quicksort  Memory: 26kB
+   Buffers: shared hit=1364
+   ->  Finalize GroupAggregate  (cost=4025.03..4030.31 rows=24 width=52) (actual time=12.595..15.311 rows=24.00 loops=1)
+         Group Key: s.id
+         Buffers: shared hit=1361
+         ->  Gather Merge  (cost=4025.03..4029.71 rows=41 width=52) (actual time=12.589..15.276 rows=48.00 loops=1)
+               Workers Planned: 1
+               Workers Launched: 1
+               Buffers: shared hit=1361
+               ->  Sort  (cost=3025.02..3025.08 rows=24 width=52) (actual time=10.113..10.116 rows=24.00 loops=2)
+                     Sort Key: s.id
+                     Sort Method: quicksort  Memory: 27kB
+                     Buffers: shared hit=1361
+                     Worker 0:  Sort Method: quicksort  Memory: 27kB
+                     ->  Partial HashAggregate  (cost=3024.17..3024.47 rows=24 width=52) (actual time=10.073..10.080 rows=24.00 loops=2)
+                           Group Key: s.id
+                           Batches: 1  Memory Usage: 32kB
+                           Buffers: shared hit=1354
+                           Worker 0:  Batches: 1  Memory Usage: 32kB
+                           ->  Hash Join  (cost=1.54..2945.97 rows=15641 width=28) (actual time=1.958..8.348 rows=13320.00 loops=2)
+                                 Hash Cond: (co.id_sala_venta = s.id)
+                                 Buffers: shared hit=1354
+                                 ->  Parallel Seq Scan on comprobante co  (cost=0.00..2896.12 rows=15641 width=12) (actual time=1.916..6.560 rows=13320.00 loops=2)
+                                       Filter: (fecha >= (CURRENT_DATE - '3 mons'::interval))
+                                       Rows Removed by Filter: 61680
+                                       Buffers: shared hit=1352
+                                 ->  Hash  (cost=1.24..1.24 rows=24 width=20) (actual time=0.020..0.021 rows=24.00 loops=2)
+                                       Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                                       Buffers: shared hit=2
+                                       ->  Seq Scan on sala_venta s  (cost=0.00..1.24 rows=24 width=20) (actual time=0.011..0.012 rows=24.00 loops=2)
+                                             Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=175
+ Planning Time: 0.695 ms
+ Execution Time: 15.478 ms
+(37 filas)
+

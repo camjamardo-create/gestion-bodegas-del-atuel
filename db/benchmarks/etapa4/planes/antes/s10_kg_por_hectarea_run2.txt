@@ -1,0 +1,38 @@
+﻿                                                              QUERY PLAN                                                              
+--------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=18346.34..18347.09 rows=300 width=42) (actual time=49.269..49.296 rows=624.00 loops=1)
+   Sort Key: r.id_finca, r."campaña", r.numero_parcela
+   Sort Method: quicksort  Memory: 49kB
+   Buffers: shared hit=18
+   CTE rendimiento
+     ->  HashAggregate  (cost=52.00..67.75 rows=900 width=48) (actual time=0.900..1.147 rows=900.00 loops=1)
+           Group Key: p.id_finca, l.numero_parcela, l."campaña", p.superficie
+           Batches: 1  Memory Usage: 609kB
+           Buffers: shared hit=12
+           ->  Hash Join  (cost=19.00..40.75 rows=900 width=24) (actual time=0.148..0.371 rows=900.00 loops=1)
+                 Hash Cond: ((l.id_finca = p.id_finca) AND (l.numero_parcela = p.numero_parcela))
+                 Buffers: shared hit=12
+                 ->  Seq Scan on lote l  (cost=0.00..17.00 rows=900 width=18) (actual time=0.008..0.062 rows=900.00 loops=1)
+                       Buffers: shared hit=8
+                 ->  Hash  (cost=10.00..10.00 rows=600 width=14) (actual time=0.123..0.124 rows=600.00 loops=1)
+                       Buckets: 1024  Batches: 1  Memory Usage: 37kB
+                       Buffers: shared hit=4
+                       ->  Seq Scan on parcela p  (cost=0.00..10.00 rows=600 width=14) (actual time=0.007..0.043 rows=600.00 loops=1)
+                             Buffers: shared hit=4
+   ->  CTE Scan on rendimiento r  (cost=0.00..18266.25 rows=300 width=42) (actual time=1.337..48.849 rows=624.00 loops=1)
+         Filter: (kg_ha < (SubPlan 2))
+         Rows Removed by Filter: 276
+         Storage: Memory  Maximum Storage: 66kB
+         Buffers: shared hit=12
+         SubPlan 2
+           ->  Aggregate  (cost=20.26..20.27 rows=1 width=32) (actual time=0.053..0.053 rows=1.00 loops=900)
+                 ->  CTE Scan on rendimiento r2  (cost=0.00..20.25 rows=4 width=32) (actual time=0.002..0.049 rows=30.85 loops=900)
+                       Filter: (id_finca = r.id_finca)
+                       Rows Removed by Filter: 869
+                       Storage: Memory  Maximum Storage: 66kB
+ Planning:
+   Buffers: shared hit=176
+ Planning Time: 0.684 ms
+ Execution Time: 49.548 ms
+(34 filas)
+

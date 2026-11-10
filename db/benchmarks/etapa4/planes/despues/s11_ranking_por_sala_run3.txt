@@ -1,0 +1,54 @@
+﻿                                                                                        QUERY PLAN                                                                                         
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Incremental Sort  (cost=18039.69..18935.68 rows=12000 width=24) (actual time=151.559..159.659 rows=11999.00 loops=1)
+   Sort Key: s.id, (rank() OVER w1)
+   Presorted Key: s.id
+   Full-sort Groups: 24  Sort Method: quicksort  Average Memory: 27kB  Peak Memory: 27kB
+   Pre-sorted Groups: 24  Sort Method: quicksort  Average Memory: 44kB  Peak Memory: 44kB
+   Buffers: shared hit=5422
+   ->  WindowAgg  (cost=18007.27..18247.25 rows=12000 width=24) (actual time=151.294..158.025 rows=11999.00 loops=1)
+         Window: w1 AS (PARTITION BY s.id ORDER BY (sum(rc.cantidad)) ROWS UNBOUNDED PRECEDING)
+         Storage: Memory  Maximum Storage: 17kB
+         Buffers: shared hit=5416
+         ->  Sort  (cost=18007.25..18037.25 rows=12000 width=16) (actual time=151.284..154.653 rows=11999.00 loops=1)
+               Sort Key: s.id, (sum(rc.cantidad)) DESC
+               Sort Method: quicksort  Memory: 759kB
+               Buffers: shared hit=5416
+               ->  Finalize HashAggregate  (cost=17074.21..17194.21 rows=12000 width=16) (actual time=146.385..150.432 rows=11999.00 loops=1)
+                     Group Key: s.id, rc.codigo_vino
+                     Batches: 1  Memory Usage: 793kB
+                     Buffers: shared hit=5416
+                     ->  Gather  (cost=13858.21..16858.21 rows=28800 width=16) (actual time=133.645..141.824 rows=35978.00 loops=1)
+                           Workers Planned: 2
+                           Workers Launched: 2
+                           Buffers: shared hit=5416
+                           ->  Partial HashAggregate  (cost=12858.21..12978.21 rows=12000 width=16) (actual time=130.077..131.400 rows=11992.67 loops=3)
+                                 Group Key: s.id, rc.codigo_vino
+                                 Batches: 1  Memory Usage: 793kB
+                                 Buffers: shared hit=5416
+                                 Worker 0:  Batches: 1  Memory Usage: 793kB
+                                 Worker 1:  Batches: 1  Memory Usage: 793kB
+                                 ->  Hash Join  (cost=3325.83..11094.68 rows=235137 width=12) (actual time=17.315..95.707 rows=188109.33 loops=3)
+                                       Hash Cond: (co.id_sala_venta = s.id)
+                                       Buffers: shared hit=5416
+                                       ->  Parallel Hash Join  (cost=3324.29..10366.91 rows=235137 width=12) (actual time=17.274..69.164 rows=188109.33 loops=3)
+                                             Hash Cond: (rc.numero_comprobante = co.numero)
+                                             Buffers: shared hit=5413
+                                             ->  Parallel Seq Scan on renglon_comprobante rc  (cost=0.00..6425.37 rows=235137 width=12) (actual time=0.016..10.715 rows=188109.33 loops=3)
+                                                   Buffers: shared hit=4074
+                                             ->  Parallel Hash  (cost=2221.35..2221.35 rows=88235 width=8) (actual time=16.275..16.276 rows=50000.00 loops=3)
+                                                   Buckets: 262144  Batches: 1  Memory Usage: 7968kB
+                                                   Buffers: shared hit=1339
+                                                   ->  Parallel Seq Scan on comprobante co  (cost=0.00..2221.35 rows=88235 width=8) (actual time=0.010..4.778 rows=50000.00 loops=3)
+                                                         Buffers: shared hit=1339
+                                       ->  Hash  (cost=1.24..1.24 rows=24 width=4) (actual time=0.022..0.023 rows=24.00 loops=3)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                             Buffers: shared hit=3
+                                             ->  Seq Scan on sala_venta s  (cost=0.00..1.24 rows=24 width=4) (actual time=0.013..0.014 rows=24.00 loops=3)
+                                                   Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=246
+ Planning Time: 1.092 ms
+ Execution Time: 160.905 ms
+(50 filas)
+

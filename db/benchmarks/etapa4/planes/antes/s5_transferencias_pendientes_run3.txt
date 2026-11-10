@@ -1,0 +1,28 @@
+﻿                                                             QUERY PLAN                                                             
+------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=27.39..27.45 rows=24 width=28) (actual time=0.191..0.194 rows=24.00 loops=1)
+   Sort Key: (count(t.numero)), s.id
+   Sort Method: quicksort  Memory: 26kB
+   Buffers: shared hit=15
+   ->  HashAggregate  (cost=26.60..26.84 rows=24 width=28) (actual time=0.127..0.132 rows=24.00 loops=1)
+         Group Key: s.id
+         Batches: 1  Memory Usage: 32kB
+         Buffers: shared hit=9
+         ->  Hash Right Join  (cost=1.54..26.10 rows=100 width=24) (actual time=0.091..0.112 rows=100.00 loops=1)
+               Hash Cond: (t.id_sala_venta = s.id)
+               Buffers: shared hit=9
+               ->  Seq Scan on transferencia t  (cost=0.00..24.25 rows=100 width=8) (actual time=0.056..0.063 rows=100.00 loops=1)
+                     Filter: (estado <> 'procesado'::tipo_estado)
+                     Rows Removed by Filter: 1200
+                     Buffers: shared hit=8
+               ->  Hash  (cost=1.24..1.24 rows=24 width=20) (actual time=0.020..0.020 rows=24.00 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on sala_venta s  (cost=0.00..1.24 rows=24 width=20) (actual time=0.009..0.011 rows=24.00 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=146
+ Planning Time: 0.536 ms
+ Execution Time: 0.292 ms
+(24 filas)
+

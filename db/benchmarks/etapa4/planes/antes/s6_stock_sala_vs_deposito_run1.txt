@@ -1,0 +1,36 @@
+﻿                                                                    QUERY PLAN                                                                    
+--------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=102.69..102.70 rows=2 width=27) (actual time=0.372..0.377 rows=0.00 loops=1)
+   Sort Key: v.codigo
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=15
+   ->  Nested Loop  (cost=29.68..102.68 rows=2 width=27) (actual time=0.331..0.335 rows=0.00 loops=1)
+         Buffers: shared hit=12
+         ->  Hash Right Join  (cost=29.41..101.99 rows=2 width=23) (actual time=0.330..0.334 rows=0.00 loops=1)
+               Hash Cond: (ss.codigo_vino = v.codigo)
+               Filter: (COALESCE(ss.cantidad, 0) = 0)
+               Rows Removed by Filter: 500
+               Buffers: shared hit=12
+               ->  Bitmap Heap Scan on stock_sala ss  (cost=12.16..83.41 rows=500 width=8) (actual time=0.047..0.071 rows=500.00 loops=1)
+                     Recheck Cond: (id_sala = 4)
+                     Heap Blocks: exact=3
+                     Buffers: shared hit=6
+                     ->  Bitmap Index Scan on stock_sala_pkey  (cost=0.00..12.04 rows=500 width=0) (actual time=0.036..0.037 rows=500.00 loops=1)
+                           Index Cond: (id_sala = 4)
+                           Index Searches: 1
+                           Buffers: shared hit=3
+               ->  Hash  (cost=11.00..11.00 rows=500 width=23) (actual time=0.197..0.200 rows=500.00 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 36kB
+                     Buffers: shared hit=6
+                     ->  Seq Scan on vino v  (cost=0.00..11.00 rows=500 width=23) (actual time=0.027..0.064 rows=500.00 loops=1)
+                           Buffers: shared hit=6
+         ->  Index Scan using stock_deposito_pkey on stock_deposito sd  (cost=0.27..0.35 rows=1 width=8) (never executed)
+               Index Cond: (codigo_vino = v.codigo)
+               Filter: (cantidad > 0)
+               Index Searches: 0
+ Planning:
+   Buffers: shared hit=219
+ Planning Time: 0.911 ms
+ Execution Time: 0.465 ms
+(32 filas)
+

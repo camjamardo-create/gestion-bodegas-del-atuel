@@ -1,0 +1,58 @@
+﻿                                                                                                         QUERY PLAN                                                                                                          
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Incremental Sort  (cost=34899.12..35795.11 rows=12000 width=24) (actual time=162.466..171.337 rows=11999.00 loops=1)
+   Sort Key: s.id, (rank() OVER w1)
+   Presorted Key: s.id
+   Full-sort Groups: 24  Sort Method: quicksort  Average Memory: 27kB  Peak Memory: 27kB
+   Pre-sorted Groups: 24  Sort Method: quicksort  Average Memory: 44kB  Peak Memory: 44kB
+   Buffers: shared hit=8915 read=386 written=70
+   ->  WindowAgg  (cost=34866.70..35106.68 rows=12000 width=24) (actual time=162.198..169.645 rows=11999.00 loops=1)
+         Window: w1 AS (PARTITION BY s.id ORDER BY (sum(rc.cantidad)) ROWS UNBOUNDED PRECEDING)
+         Storage: Memory  Maximum Storage: 17kB
+         Buffers: shared hit=8909 read=386 written=70
+         ->  Sort  (cost=34866.68..34896.68 rows=12000 width=16) (actual time=162.187..166.133 rows=11999.00 loops=1)
+               Sort Key: s.id, (sum(rc.cantidad)) DESC
+               Sort Method: quicksort  Memory: 759kB
+               Buffers: shared hit=8909 read=386 written=70
+               ->  Finalize HashAggregate  (cost=33933.64..34053.64 rows=12000 width=16) (actual time=157.372..161.926 rows=11999.00 loops=1)
+                     Group Key: s.id, rc.codigo_vino
+                     Batches: 1  Memory Usage: 793kB
+                     Buffers: shared hit=8909 read=386 written=70
+                     ->  Gather  (cost=30717.64..33717.64 rows=28800 width=16) (actual time=144.082..153.538 rows=35986.00 loops=1)
+                           Workers Planned: 2
+                           Workers Launched: 2
+                           Buffers: shared hit=8909 read=386 written=70
+                           ->  Partial HashAggregate  (cost=29717.64..29837.64 rows=12000 width=16) (actual time=140.581..142.095 rows=11995.33 loops=3)
+                                 Group Key: s.id, rc.codigo_vino
+                                 Batches: 1  Memory Usage: 793kB
+                                 Buffers: shared hit=8909 read=386 written=70
+                                 Worker 0:  Batches: 1  Memory Usage: 793kB
+                                 Worker 1:  Batches: 1  Memory Usage: 793kB
+                                 ->  Hash Join  (cost=5759.93..27954.11 rows=235137 width=12) (actual time=20.331..107.693 rows=188109.33 loops=3)
+                                       Hash Cond: (co.id_sala_venta = s.id)
+                                       Buffers: shared hit=8909 read=386 written=70
+                                       ->  Parallel Hash Join  (cost=5747.14..27215.09 rows=235137 width=12) (actual time=20.274..83.628 rows=188109.33 loops=3)
+                                             Hash Cond: (rc.numero_comprobante = co.numero)
+                                             Buffers: shared hit=8901 read=386 written=70
+                                             ->  Parallel Index Scan using renglon_comprobante_pkey on renglon_comprobante rc  (cost=0.42..20851.12 rows=235137 width=12) (actual time=0.087..26.634 rows=188109.33 loops=3)
+                                                   Index Searches: 1
+                                                   Buffers: shared hit=6761 read=386 written=70
+                                             ->  Parallel Hash  (cost=4643.77..4643.77 rows=88235 width=8) (actual time=19.254..19.256 rows=50000.00 loops=3)
+                                                   Buckets: 262144  Batches: 1  Memory Usage: 7968kB
+                                                   Buffers: shared hit=2140
+                                                   ->  Parallel Index Scan using comprobante_pkey on comprobante co  (cost=0.42..4643.77 rows=88235 width=8) (actual time=0.025..8.237 rows=50000.00 loops=3)
+                                                         Index Searches: 1
+                                                         Buffers: shared hit=2140
+                                       ->  Hash  (cost=12.50..12.50 rows=24 width=4) (actual time=0.036..0.037 rows=24.00 loops=3)
+                                             Buckets: 1024  Batches: 1  Memory Usage: 9kB
+                                             Buffers: shared hit=8
+                                             ->  Index Only Scan using sala_venta_pkey on sala_venta s  (cost=0.14..12.50 rows=24 width=4) (actual time=0.026..0.029 rows=24.00 loops=3)
+                                                   Heap Fetches: 72
+                                                   Index Searches: 3
+                                                   Buffers: shared hit=8
+ Planning:
+   Buffers: shared hit=255 read=4
+ Planning Time: 1.026 ms
+ Execution Time: 172.629 ms
+(54 filas)
+
