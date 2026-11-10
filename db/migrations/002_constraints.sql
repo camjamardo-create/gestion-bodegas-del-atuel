@@ -8,10 +8,16 @@ BEGIN;
 --- ===============================================================================
 ---  1. UNIQUE
 
--- Hay una única combinación de tipo_documento y numero_documento en cliente
-ALTER TABLE cliente
-    ADD CONSTRAINT uk_cliente_tipo_num_doc
-        UNIQUE (tipo_documento, numero_documento);
+-- Hay una única combinación de tipo_documento y numero_documento por cliente
+-- con estado activo. Agregado en este archivo por restriccion de integridad
+-- en vez de:
+--ALTER TABLE cliente
+--    ADD CONSTRAINT uk_cliente_tipo_num_doc
+--        UNIQUE (tipo_documento, numero_documento);
+CREATE UNIQUE INDEX uk_cliente_tipo_num_doc_activo
+    ON cliente (tipo_documento, numero_documento)
+    WHERE estado_activo;
+
 
 -- Una parcela se cosecha como maximo una vez por campaña
 -- "por cada campaña, hay una unica parcela perteneciente a una finca que genera un lote"
@@ -198,7 +204,9 @@ ALTER TABLE transferencia
 
 -- El alta del cliente se registra con la fecha actual
 ALTER TABLE cliente
-    ALTER COLUMN fecha_alta SET DEFAULT CURRENT_DATE;
+    ALTER COLUMN fecha_alta SET DEFAULT CURRENT_DATE,
+-- El estado del cliente es activo hasta que se decida lo contrario
+    ALTER COLUMN estado_activo SET DEFAULT TRUE;
 
 -- El stock arranca en cero hasta que se registren movimientos
 ALTER TABLE stock_deposito
