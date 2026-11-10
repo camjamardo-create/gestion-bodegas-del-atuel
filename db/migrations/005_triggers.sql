@@ -272,7 +272,7 @@ BEFORE INSERT OR UPDATE OR DELETE ON renglon_ingreso
 FOR EACH ROW
 EXECUTE FUNCTION trg_bloquear_renglon_ingreso();
 
--- mismo razonamiento para las transferencias
+-- mismo razonamiento para las transferencias.
 CREATE OR REPLACE FUNCTION trg_bloquear_renglon_transferencia()
 RETURNS trigger
 LANGUAGE plpgsql
