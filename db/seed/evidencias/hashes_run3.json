@@ -1,0 +1,131 @@
+{
+  "meta": {
+    "seed": 42,
+    "fecha_ref": "2026-11-10",
+    "escala": 1.0,
+    "modo": "copy"
+  },
+  "tablas": {
+    "bodega": {
+      "filas": 20,
+      "sha256": "d67935d2a2e6654ef6d2ea329c26f181c080912f38f70dfb3d9c53a8068cac85"
+    },
+    "finca": {
+      "filas": 30,
+      "sha256": "8e4af646a4bbcd53a2b6eef3997c0303338957a2aab7550d5ae5614e9fcaae7c"
+    },
+    "cepa": {
+      "filas": 12,
+      "sha256": "60c17c156c876e77daaaac3484f74046edf6eb96c12495e8b1f5ae2b11cc0609"
+    },
+    "maridaje": {
+      "filas": 8,
+      "sha256": "1de0524c6de1d18ec967f4bde43c557647a0c26553df1963ae4468ffb09a8a1e"
+    },
+    "transportista": {
+      "filas": 12,
+      "sha256": "a2596f9bd33ddc0b82aaf1ae3038a4ab2ca240cc1e24d07fa06f007622d33e5f"
+    },
+    "localidad": {
+      "filas": 18,
+      "sha256": "cacb2e1235bb19b407d3ef0a0da1454a040da772809fe361b5175d883b79f12b"
+    },
+    "sala_venta": {
+      "filas": 24,
+      "sha256": "a6f55bd1ae19f88eff719711a74d6d084c63c96bb030ba96f9f4c506bb65e731"
+    },
+    "empleado": {
+      "filas": 80,
+      "sha256": "14b3814320b13eb452d5fec15965b7afcbd17954d3d34c57d643bd5dffc3f79b"
+    },
+    "transportista_cubre_localidad": {
+      "filas": 46,
+      "sha256": "057f4976062c691ccf148bf76a58c92fbb402dd8b4afe62aa0e273250e202b1b"
+    },
+    "ingreso": {
+      "filas": 1200,
+      "sha256": "10b02d8a83927a9fa6e0bac2fb5eafaba94ce1c068f72d6e2ca0b18175db24c9"
+    },
+    "cliente": {
+      "filas": 20000,
+      "sha256": "04059b1cf70cb02fa7c58f06a9e097be43375a6d1bd290e738308d2560a815e7"
+    },
+    "cliente_comun": {
+      "filas": 8000,
+      "sha256": "fb1f05c8a26682e66f57afe05d36314fb8fac01bade7cb17f0040a560d490111"
+    },
+    "socio_club": {
+      "filas": 8000,
+      "sha256": "48146aadcafdc3166932c61f32307d466587ee923ef50e0bc51da4ab7e66201b"
+    },
+    "distribuidor": {
+      "filas": 2400,
+      "sha256": "e2a6dd19052c6e29cde485216d8ad989726fde463291904b95ec6d18dfc20c3a"
+    },
+    "exportador": {
+      "filas": 1600,
+      "sha256": "0ff0a0f9fa4fa3741ce435a99f736697a9c6c37e08ff590809332d65266f5b51"
+    },
+    "permiso": {
+      "filas": 3937,
+      "sha256": "330cf5b3cb06a944d64e5f7aea711f837ca4147c1c147e52975105d16b175162"
+    },
+    "parcela": {
+      "filas": 600,
+      "sha256": "7f0bbf694216ff668ec67c119f817fff0379403d979efd03dce1b7a5f3e97de2"
+    },
+    "lote": {
+      "filas": 900,
+      "sha256": "6eae6ae33d6c0be8e073fa2c44583a93448a7bb19f56034e6a70d2c832f6594f"
+    },
+    "analisis_calidad": {
+      "filas": 3180,
+      "sha256": "d2660038f9b0550efafaca67959fcde2e3eb484cd91798a9e0d35d49ecea6ef4"
+    },
+    "vino": {
+      "filas": 500,
+      "sha256": "8d4fa57d277708ac28ddb3510b15f1a0eef9bd5b1c9e693eeb768e012afa6f68"
+    },
+    "composicion": {
+      "filas": 946,
+      "sha256": "97b16b5de46f5ea217cb86b1221e218d7dbf277261c30cee0032c5da5fde5af8"
+    },
+    "stock_deposito": {
+      "filas": 500,
+      "sha256": "f6e498f08b2ff3a0567b8c4dfb775bb3209b92bb624bf403526857d848f14a5e"
+    },
+    "vino_maridaje": {
+      "filas": 886,
+      "sha256": "69232884261c5dc74fd8be8bf92e489bcc593e12fc2b1839d76a535c95d80a7a"
+    },
+    "renglon_ingreso": {
+      "filas": 3767,
+      "sha256": "b31471973347011f03d912886ca9b2f588f524962266c1f9a2f014b0f28b1e3b"
+    },
+    "auditoria_precio": {
+      "filas": 132,
+      "sha256": "40d2099eba71f5616a1111ac3a9e1054798c18b766b9a26767e056b15520b4a4"
+    },
+    "stock_sala": {
+      "filas": 12000,
+      "sha256": "7dd0a57954dcdb4c7a3b4422f981aa27338485d18be053641ecf5d9d5db4b478"
+    },
+    "comprobante": {
+      "filas": 150000,
+      "sha256": "ea04f8f5823b934728ac09b15f07366db6f5ab9ac45676ff6f9bdb9d39f32f74"
+    },
+    "renglon_comprobante": {
+      "filas": 564328,
+      "sha256": "ff0e7e3a984b891eaa515a4f63522cf7c33b0ee7c2bf4f5e2907301b4e877fdc"
+    },
+    "transferencia": {
+      "filas": 1300,
+      "sha256": "41b0044148e8f93ad566d2dbe8def9991b9c52166682926e716b7773c1534956"
+    },
+    "renglon_transferencia": {
+      "filas": 12255,
+      "sha256": "e091657d3d391531f8531b477125af5167faadee1080ce6147788e89c4822538"
+    }
+  },
+  "combined": "5865ce1cc63f998d109af49a3f9e44656ff8935f3a743459ccf1697cb1d01745"
+}

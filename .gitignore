@@ -1,0 +1,14 @@
+# Entorno local
+.env
+.venv/
+venv/
+__pycache__/
+*.pyc
+
+# Dumps de la carga masiva
+db/seed/dump_completo.sql.gz
+db/seed/dump_completo.sql
+db/seed/restore_test/
+
+# Salidas temporales
+db/seed/.benchmark/
