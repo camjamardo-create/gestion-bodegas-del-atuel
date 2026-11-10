@@ -83,17 +83,16 @@ GRANT CONNECT ON DATABASE bodegas_del_atuel TO rol_api, rol_reporte;
 --- ===============================================================================
 -- 7. PERMISOS POR DEFECTO PARA OBJETOS FUTUROS
 
+
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
     GRANT USAGE, SELECT ON SEQUENCES TO rol_api;
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA public
+-- global a proposito: el REVOKE por esquema no tiene efecto
+ALTER DEFAULT PRIVILEGES
     REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC;
 
 ALTER DEFAULT PRIVILEGES IN SCHEMA public
     GRANT EXECUTE ON FUNCTIONS TO rol_api;
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA public
-    GRANT EXECUTE ON PROCEDURES TO rol_api;
 
-    
 COMMIT;
