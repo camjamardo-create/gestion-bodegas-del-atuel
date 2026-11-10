@@ -1,0 +1,35 @@
+﻿                                                                              QUERY PLAN                                                                              
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=4396.37..4396.38 rows=4 width=12) (actual time=7.275..9.651 rows=4.00 loops=1)
+   Sort Key: (count(DISTINCT c.id)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=2163
+   ->  GroupAggregate  (cost=4352.75..4396.33 rows=4 width=12) (actual time=7.218..9.630 rows=4.00 loops=1)
+         Group Key: c.tipo
+         Buffers: shared hit=2160
+         ->  Gather Merge  (cost=4352.75..4394.46 rows=366 width=8) (actual time=7.158..9.587 rows=395.00 loops=1)
+               Workers Planned: 1
+               Workers Launched: 1
+               Buffers: shared hit=2160
+               ->  Sort  (cost=3352.74..3353.28 rows=215 width=8) (actual time=4.630..4.637 rows=197.50 loops=2)
+                     Sort Key: c.tipo, c.id
+                     Sort Method: quicksort  Memory: 29kB
+                     Buffers: shared hit=2160
+                     Worker 0:  Sort Method: quicksort  Memory: 29kB
+                     ->  Nested Loop  (cost=0.29..3344.41 rows=215 width=8) (actual time=3.901..4.525 rows=197.50 loops=2)
+                           Buffers: shared hit=2145
+                           ->  Parallel Seq Scan on comprobante co  (cost=0.00..3116.71 rows=215 width=4) (actual time=3.860..4.127 rows=197.50 loops=2)
+                                 Filter: ((id_sala_venta = 4) AND (fecha >= (CURRENT_DATE - 7)))
+                                 Rows Removed by Filter: 74802
+                                 Buffers: shared hit=1352
+                           ->  Index Only Scan using uk_cliente_id_tipo on cliente c  (cost=0.29..1.06 rows=1 width=8) (actual time=0.002..0.002 rows=1.00 loops=395)
+                                 Index Cond: (id = co.id_cliente)
+                                 Heap Fetches: 0
+                                 Index Searches: 395
+                                 Buffers: shared hit=793
+ Planning:
+   Buffers: shared hit=196
+ Planning Time: 0.706 ms
+ Execution Time: 9.753 ms
+(31 filas)
+

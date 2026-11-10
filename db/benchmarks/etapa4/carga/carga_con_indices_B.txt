@@ -1,0 +1,78 @@
+﻿Generando datos en memoria...
+Conteos generados:
+  bodega                                 20
+  finca                                  30
+  cepa                                   12
+  maridaje                                8
+  transportista                          12
+  localidad                              18
+  sala_venta                             24
+  empleado                               80
+  transportista_cubre_localidad          46
+  ingreso                              1200
+  cliente                             20000
+  cliente_comun                        8000
+  socio_club                           8000
+  distribuidor                         2400
+  exportador                           1600
+  permiso                              3937
+  parcela                               600
+  lote                                  900
+  analisis_calidad                     3180
+  vino                                  500
+  composicion                           946
+  stock_deposito                        500
+  vino_maridaje                         886
+  renglon_ingreso                      3767
+  auditoria_precio                      132
+  stock_sala                          12000
+  comprobante                        150000
+  renglon_comprobante                564328
+  transferencia                        1300
+  renglon_transferencia               12255
+Conectado a bodegas_del_atuel en localhost:5433 como postgres (server 180006)
+ADVERTENCIA: --limpiar truncará TODAS las tablas, incluidos los catálogos.
+Los catálogos se recargan desde db/seed/catalogos/*.csv.
+Deshabilitando triggers de usuario...
+Cargando catálogos con IDs explícitos...
+  cepa                                   12 filas     0.04 s
+  maridaje                                8 filas     0.04 s
+Cargando datos en modo copy...
+  bodega                                 20 filas     0.00 s
+  finca                                  30 filas     0.00 s
+  transportista                          12 filas     0.00 s
+  localidad                              18 filas     0.00 s
+  sala_venta                             24 filas     0.00 s
+  empleado                               80 filas     0.00 s
+  parcela                               600 filas     0.05 s
+  lote                                  900 filas     0.06 s
+  analisis_calidad                     3180 filas     0.03 s
+  vino                                  500 filas     0.05 s
+  composicion                           946 filas     0.05 s
+  vino_maridaje                         886 filas     0.01 s
+  cliente                             20000 filas     0.25 s
+  cliente_comun                        8000 filas     0.13 s
+  socio_club                           8000 filas     0.09 s
+  distribuidor                         2400 filas     0.06 s
+  exportador                           1600 filas     0.06 s
+  permiso                              3937 filas     0.06 s
+  transportista_cubre_localidad          46 filas     0.00 s
+  ingreso                              1200 filas     0.06 s
+  renglon_ingreso                      3767 filas     0.08 s
+  transferencia                        1300 filas     0.05 s
+  renglon_transferencia               12255 filas     0.15 s
+  comprobante                        150000 filas     2.28 s
+  renglon_comprobante                564328 filas     6.26 s
+  auditoria_precio                      132 filas     0.00 s
+  stock_deposito                        500 filas     0.00 s
+  stock_sala                          12000 filas     0.15 s
+Forzando restricciones diferidas...
+Re-habilitando triggers de usuario...
+Triggers de usuario verificados: todos en tgenabled = 'O'.
+Ejecutando ANALYZE...
+Ajustando secuencias identidad con setval...
+ANALYZE y setval completados.
+Hash combinado: 5865ce1cc63f998d109af49a3f9e44656ff8935f3a743459ccf1697cb1d01745
+Hashes escritos en db\seed\.benchmark\hashes_con_indices_B.json
+
+Carga finalizada correctamente.

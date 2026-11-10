@@ -1,0 +1,31 @@
+﻿                                                                                                 QUERY PLAN                                                                                                  
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=22407.52..22407.55 rows=10 width=31) (actual time=183.978..183.982 rows=10.00 loops=1)
+   Buffers: shared hit=17 read=1540 written=429
+   ->  Sort  (cost=22407.52..22556.27 rows=59500 width=31) (actual time=183.976..183.979 rows=10.00 loops=1)
+         Sort Key: (sum(rc.cantidad)) DESC
+         Sort Method: top-N heapsort  Memory: 26kB
+         Buffers: shared hit=17 read=1540 written=429
+         ->  HashAggregate  (cost=20526.75..21121.75 rows=59500 width=31) (actual time=183.743..183.887 rows=500.00 loops=1)
+               Group Key: rc.codigo_vino, v.nombre
+               Batches: 1  Memory Usage: 1081kB
+               Buffers: shared hit=14 read=1540 written=429
+               ->  Hash Join  (cost=39.45..16294.29 rows=564328 width=27) (actual time=0.230..114.308 rows=564328.00 loops=1)
+                     Hash Cond: (rc.codigo_vino = v.codigo)
+                     Buffers: shared hit=14 read=1540 written=429
+                     ->  Index Only Scan using idx_renglon_comprobante_vino_cantidad on renglon_comprobante rc  (cost=0.42..14761.34 rows=564328 width=8) (actual time=0.028..53.725 rows=564328.00 loops=1)
+                           Heap Fetches: 0
+                           Index Searches: 1
+                           Buffers: shared hit=5 read=1540 written=429
+                     ->  Hash  (cost=32.77..32.77 rows=500 width=23) (actual time=0.172..0.173 rows=500.00 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 37kB
+                           Buffers: shared hit=9
+                           ->  Index Scan using vino_pkey on vino v  (cost=0.27..32.77 rows=500 width=23) (actual time=0.021..0.088 rows=500.00 loops=1)
+                                 Index Searches: 1
+                                 Buffers: shared hit=9
+ Planning:
+   Buffers: shared hit=227
+ Planning Time: 1.058 ms
+ Execution Time: 185.201 ms
+(27 filas)
+

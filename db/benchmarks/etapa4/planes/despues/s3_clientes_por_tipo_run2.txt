@@ -1,0 +1,31 @@
+﻿                                                                                   QUERY PLAN                                                                                   
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=376.84..376.85 rows=4 width=12) (actual time=0.812..0.813 rows=4.00 loops=1)
+   Sort Key: (count(DISTINCT c.id)) DESC
+   Sort Method: quicksort  Memory: 25kB
+   Buffers: shared hit=808
+   ->  GroupAggregate  (cost=373.96..376.80 rows=4 width=12) (actual time=0.770..0.792 rows=4.00 loops=1)
+         Group Key: c.tipo
+         Buffers: shared hit=805
+         ->  Sort  (cost=373.96..374.89 rows=374 width=8) (actual time=0.750..0.762 rows=395.00 loops=1)
+               Sort Key: c.tipo, c.id
+               Sort Method: quicksort  Memory: 34kB
+               Buffers: shared hit=805
+               ->  Nested Loop  (cost=0.71..357.98 rows=374 width=8) (actual time=0.029..0.591 rows=395.00 loops=1)
+                     Buffers: shared hit=797
+                     ->  Index Only Scan using idx_comprobante_sala_fecha on comprobante co  (cost=0.42..15.91 rows=374 width=4) (actual time=0.014..0.043 rows=395.00 loops=1)
+                           Index Cond: ((id_sala_venta = 4) AND (fecha >= (CURRENT_DATE - 7)))
+                           Heap Fetches: 0
+                           Index Searches: 1
+                           Buffers: shared hit=6
+                     ->  Index Only Scan using uk_cliente_id_tipo on cliente c  (cost=0.29..0.91 rows=1 width=8) (actual time=0.001..0.001 rows=1.00 loops=395)
+                           Index Cond: (id = co.id_cliente)
+                           Heap Fetches: 0
+                           Index Searches: 395
+                           Buffers: shared hit=791
+ Planning:
+   Buffers: shared hit=256
+ Planning Time: 0.779 ms
+ Execution Time: 0.886 ms
+(27 filas)
+

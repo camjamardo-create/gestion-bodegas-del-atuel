@@ -1,0 +1,33 @@
+﻿                                                                           QUERY PLAN                                                                           
+----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=2078.34..2078.40 rows=24 width=52) (actual time=10.800..10.802 rows=24.00 loops=1)
+   Sort Key: (sum(co.total)) DESC
+   Sort Method: quicksort  Memory: 26kB
+   Buffers: shared hit=297
+   ->  HashAggregate  (cost=2077.49..2077.79 rows=24 width=52) (actual time=10.740..10.746 rows=24.00 loops=1)
+         Group Key: s.id
+         Batches: 1  Memory Usage: 32kB
+         Buffers: shared hit=294
+         ->  Hash Join  (cost=20.31..1943.47 rows=26804 width=28) (actual time=0.270..7.244 rows=26640.00 loops=1)
+               Hash Cond: (co.id_sala_venta = s.id)
+               Buffers: shared hit=294
+               ->  Bitmap Heap Scan on comprobante co  (cost=18.77..1859.14 rows=26804 width=12) (actual time=0.233..3.773 rows=26640.00 loops=1)
+                     Recheck Cond: (fecha >= (CURRENT_DATE - '3 mons'::interval))
+                     Rows Removed by Index Recheck: 4952
+                     Heap Blocks: lossy=288
+                     Buffers: shared hit=293
+                     ->  Bitmap Index Scan on idx_brin_comprobante_fecha  (cost=0.00..12.07 rows=27907 width=0) (actual time=0.054..0.054 rows=2880.00 loops=1)
+                           Index Cond: (fecha >= (CURRENT_DATE - '3 mons'::interval))
+                           Index Searches: 1
+                           Buffers: shared hit=5
+               ->  Hash  (cost=1.24..1.24 rows=24 width=20) (actual time=0.015..0.015 rows=24.00 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on sala_venta s  (cost=0.00..1.24 rows=24 width=20) (actual time=0.007..0.008 rows=24.00 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=228
+ Planning Time: 0.816 ms
+ Execution Time: 10.886 ms
+(29 filas)
+

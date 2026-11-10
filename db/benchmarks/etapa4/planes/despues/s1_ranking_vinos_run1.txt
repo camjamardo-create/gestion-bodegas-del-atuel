@@ -1,0 +1,28 @@
+﻿                                                                       QUERY PLAN                                                                        
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=17341.68..17341.71 rows=10 width=31) (actual time=171.425..171.429 rows=10.00 loops=1)
+   Buffers: shared hit=4083
+   ->  Sort  (cost=17341.68..17490.43 rows=59500 width=31) (actual time=171.423..171.426 rows=10.00 loops=1)
+         Sort Key: (sum(rc.cantidad)) DESC
+         Sort Method: top-N heapsort  Memory: 26kB
+         Buffers: shared hit=4083
+         ->  HashAggregate  (cost=15460.91..16055.91 rows=59500 width=31) (actual time=171.185..171.325 rows=500.00 loops=1)
+               Group Key: rc.codigo_vino, v.nombre
+               Batches: 1  Memory Usage: 1081kB
+               Buffers: shared hit=4080
+               ->  Hash Join  (cost=17.25..11228.45 rows=564328 width=27) (actual time=0.311..95.899 rows=564328.00 loops=1)
+                     Hash Cond: (rc.codigo_vino = v.codigo)
+                     Buffers: shared hit=4080
+                     ->  Seq Scan on renglon_comprobante rc  (cost=0.00..9717.28 rows=564328 width=8) (actual time=0.036..23.691 rows=564328.00 loops=1)
+                           Buffers: shared hit=4074
+                     ->  Hash  (cost=11.00..11.00 rows=500 width=23) (actual time=0.228..0.229 rows=500.00 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 37kB
+                           Buffers: shared hit=6
+                           ->  Seq Scan on vino v  (cost=0.00..11.00 rows=500 width=23) (actual time=0.024..0.076 rows=500.00 loops=1)
+                                 Buffers: shared hit=6
+ Planning:
+   Buffers: shared hit=203 read=1
+ Planning Time: 1.197 ms
+ Execution Time: 172.385 ms
+(24 filas)
+

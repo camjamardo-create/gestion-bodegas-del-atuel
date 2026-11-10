@@ -1,0 +1,41 @@
+﻿                                                                       QUERY PLAN                                                                        
+---------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=22819.56..22823.37 rows=1524 width=19) (actual time=208.225..208.237 rows=232.00 loops=1)
+   Sort Key: c.id
+   Sort Method: quicksort  Memory: 33kB
+   Buffers: shared hit=5688
+   ->  Hash Right Anti Join  (cost=5446.59..22738.99 rows=1524 width=19) (actual time=207.798..208.149 rows=232.00 loops=1)
+         Hash Cond: (co.id_cliente = c.id)
+         Buffers: shared hit=5685
+         ->  Hash Join  (cost=4730.59..16969.89 rows=391644 width=4) (actual time=30.725..163.938 rows=386850.00 loops=1)
+               Hash Cond: (rc.numero_comprobante = co.numero)
+               Buffers: shared hit=5419
+               ->  Hash Join  (cost=16.59..11227.79 rows=391644 width=4) (actual time=0.126..75.181 rows=386850.00 loops=1)
+                     Hash Cond: (rc.codigo_vino = v.codigo)
+                     Buffers: shared hit=4080
+                     ->  Seq Scan on renglon_comprobante rc  (cost=0.00..9717.28 rows=564328 width=8) (actual time=0.008..20.174 rows=564328.00 loops=1)
+                           Buffers: shared hit=4074
+                     ->  Hash  (cost=12.25..12.25 rows=347 width=4) (actual time=0.081..0.082 rows=347.00 loops=1)
+                           Buckets: 1024  Batches: 1  Memory Usage: 21kB
+                           Buffers: shared hit=6
+                           ->  Seq Scan on vino v  (cost=0.00..12.25 rows=347 width=4) (actual time=0.010..0.043 rows=347.00 loops=1)
+                                 Filter: (tipo = 'tinto'::tipo_vino)
+                                 Rows Removed by Filter: 153
+                                 Buffers: shared hit=6
+               ->  Hash  (cost=2839.00..2839.00 rows=150000 width=8) (actual time=29.240..29.240 rows=150000.00 loops=1)
+                     Buckets: 262144  Batches: 1  Memory Usage: 7908kB
+                     Buffers: shared hit=1339
+                     ->  Seq Scan on comprobante co  (cost=0.00..2839.00 rows=150000 width=8) (actual time=0.017..10.781 rows=150000.00 loops=1)
+                           Buffers: shared hit=1339
+         ->  Hash  (cost=466.00..466.00 rows=20000 width=19) (actual time=4.375..4.376 rows=20000.00 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 1215kB
+               Buffers: shared hit=266
+               ->  Seq Scan on cliente c  (cost=0.00..466.00 rows=20000 width=19) (actual time=0.010..1.914 rows=20000.00 loops=1)
+                     Filter: estado_activo
+                     Buffers: shared hit=266
+ Planning:
+   Buffers: shared hit=439
+ Planning Time: 1.494 ms
+ Execution Time: 208.708 ms
+(37 filas)
+

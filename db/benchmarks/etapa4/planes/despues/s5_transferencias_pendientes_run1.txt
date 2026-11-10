@@ -1,0 +1,31 @@
+﻿                                                                          QUERY PLAN                                                                          
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=21.05..21.11 rows=24 width=28) (actual time=0.205..0.208 rows=24.00 loops=1)
+   Sort Key: (count(t.numero)), s.id
+   Sort Method: quicksort  Memory: 26kB
+   Buffers: shared hit=9 read=1
+   ->  HashAggregate  (cost=20.26..20.50 rows=24 width=28) (actual time=0.160..0.165 rows=24.00 loops=1)
+         Group Key: s.id
+         Batches: 1  Memory Usage: 32kB
+         Buffers: shared hit=3 read=1
+         ->  Hash Right Join  (cost=10.21..19.76 rows=100 width=24) (actual time=0.118..0.142 rows=100.00 loops=1)
+               Hash Cond: (t.id_sala_venta = s.id)
+               Buffers: shared hit=3 read=1
+               ->  Bitmap Heap Scan on transferencia t  (cost=8.67..17.92 rows=100 width=8) (actual time=0.068..0.074 rows=100.00 loops=1)
+                     Recheck Cond: (estado <> 'procesado'::tipo_estado)
+                     Heap Blocks: exact=2
+                     Buffers: shared hit=2 read=1
+                     ->  Bitmap Index Scan on idx_transferencia_pendientes  (cost=0.00..8.64 rows=100 width=0) (actual time=0.045..0.046 rows=100.00 loops=1)
+                           Index Searches: 1
+                           Buffers: shared read=1
+               ->  Hash  (cost=1.24..1.24 rows=24 width=20) (actual time=0.031..0.031 rows=24.00 loops=1)
+                     Buckets: 1024  Batches: 1  Memory Usage: 10kB
+                     Buffers: shared hit=1
+                     ->  Seq Scan on sala_venta s  (cost=0.00..1.24 rows=24 width=20) (actual time=0.018..0.020 rows=24.00 loops=1)
+                           Buffers: shared hit=1
+ Planning:
+   Buffers: shared hit=175 read=1
+ Planning Time: 0.769 ms
+ Execution Time: 0.344 ms
+(27 filas)
+
