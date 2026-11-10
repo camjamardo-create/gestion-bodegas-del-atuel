@@ -33,7 +33,7 @@ AS $$
                    WHEN 'cliente_comun' THEN 0.00
                    WHEN 'socio_club' THEN 0.10
                    WHEN 'distribuidor' THEN 0.20
-                   WHEN 'exportador' THEN COALASCE(e.descuento_especial, 0.30)
+                   WHEN 'exportador' THEN COALESCE(e.descuento_especial, 0.30)
                 END
             -- busca en la tabla cliente
             FROM cliente c
