@@ -1,7 +1,7 @@
 -- 003_funciones.sql
 -- TPI Base de Datos - Bodegas del Atuel
 -- Etapa 2: Integridad y logica en la base de datos
--- Descripcion: 4 funciones requeridas en el TPI
+-- -- Descripcion: funciones requeridas por el TPI y funciones auxiliares de validacion
 --- ===============================================================================
 SET client_encoding = 'UTF8';
 
@@ -168,6 +168,86 @@ $$;
 
 COMMENT ON FUNCTION fn_transicion_valida(tipo_estado, tipo_estado) IS
 'valida el circuito de estados en_confeccion -> terminado -> procesado';
+
+--- ==================================================================================
+-- La suma de los porcentajes que componen la cepa debe ser 100
+
+CREATE OR REPLACE FUNCTION fn_validar_composicion_vino(p_codigo_vino INT)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_suma NUMERIC;
+BEGIN
+    -- Si el vino ya fue eliminado, sus filas de composicion se borraron en
+    -- cascada. No tiene sentido exigir una suma sobre un vino inexistente
+    IF NOT EXISTS (SELECT 1 FROM vino WHERE codigo = p_codigo_vino) THEN
+        RETURN;
+    END IF;
+
+    SELECT COALESCE(SUM(porcentaje), 0)
+        INTO v_suma
+        FROM composicion
+        WHERE codigo_vino = p_codigo_vino;
+
+    IF v_suma <> 100 THEN
+        RAISE EXCEPTION
+            'La composicion del vino % suma %, debe sumar exactamente 100 (RN-05)',
+            p_codigo_vino, v_suma;
+    END IF;
+END;
+$$;
+
+COMMENT ON FUNCTION fn_validar_composicion_vino(integer) IS
+'RN-05: valida que la composicion de un vino sume 100';
+
+--- ======================================================================================
+-- Cada fila de cliente debe tener exactamente una fila en su subtipo.
+
+CREATE OR REPLACE FUNCTION fn_validar_subtipo_cliente(p_id_cliente INT)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_tipo tipo_cliente;
+    v_cantidad INT;
+BEGIN
+    SELECT tipo
+      INTO v_tipo
+      FROM cliente
+     WHERE id = p_id_cliente;
+
+    -- Si el cliente fue eliminado, las filas de subtipo se borraron en
+    -- cascada; no hay nada que validar
+    IF NOT FOUND THEN
+        RETURN;
+    END IF;
+
+    CASE v_tipo
+        WHEN 'cliente_comun' THEN
+            SELECT COUNT(*) INTO v_cantidad
+              FROM cliente_comun WHERE id_cliente = p_id_cliente;
+        WHEN 'socio_club' THEN
+            SELECT COUNT(*) INTO v_cantidad
+              FROM socio_club WHERE id_cliente = p_id_cliente;
+        WHEN 'distribuidor' THEN
+            SELECT COUNT(*) INTO v_cantidad
+              FROM distribuidor WHERE id_cliente = p_id_cliente;
+        WHEN 'exportador' THEN
+            SELECT COUNT(*) INTO v_cantidad
+              FROM exportador WHERE id_cliente = p_id_cliente;
+    END CASE;
+
+    IF v_cantidad <> 1 THEN
+        RAISE EXCEPTION
+            'El cliente % de tipo % debe tener exactamente una fila en su subtipo (encontradas: %)',
+            p_id_cliente, v_tipo, v_cantidad;
+    END IF;
+END;
+$$;
+
+COMMENT ON FUNCTION fn_validar_subtipo_cliente(integer) IS
+'Valida la totalidad de la jerarquia cliente';
 
 
 COMMIT;
