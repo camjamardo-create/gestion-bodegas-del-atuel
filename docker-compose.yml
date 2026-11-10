@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:18
+    container_name: bodegas_del_atuel_etapa3
+    environment:
+      POSTGRES_DB: bodegas_del_atuel
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definir POSTGRES_PASSWORD en .env}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - bodegas_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bodegas_del_atuel"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    shm_size: 256mb
+
+volumes:
+  bodegas_pgdata:
