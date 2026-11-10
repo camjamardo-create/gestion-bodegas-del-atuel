@@ -245,7 +245,7 @@ BEGIN
     )
     RETURNING id INTO v_id_cliente;  -- recuperamos el id generado del cliente
 
-    -- 2) Insertar la fila del subtipo correspondiente.
+    -- 2) Insertar la fila del subtipo correspondiente
     IF p_tipo = 'cliente_comun' THEN
         INSERT INTO cliente_comun (id_cliente, tipo)
         VALUES (v_id_cliente, 'cliente_comun');
@@ -269,6 +269,81 @@ EXCEPTION
             'Ya existe un cliente activo con tipo_documento % y numero_documento %',
             p_tipo_documento, p_numero_documento
             USING ERRCODE = '23505';
+END;
+$$;
+
+--- ===============================================================================
+---  Procedimiento para cambiarle el tipo a un cliente
+---  Versionado de cliente para cambiar el tipo sin perder el historial
+---  Desactiva el cliente actual y crea uno nuevo activo con el mismo documento
+
+CREATE OR REPLACE PROCEDURE p_cambiar_tipo_cliente(
+    p_id_cliente INT,
+    p_nuevo_tipo tipo_cliente,
+    p_nombre VARCHAR(60) DEFAULT NULL,
+    p_apellido VARCHAR(60) DEFAULT NULL,
+    p_razon_social VARCHAR(120) DEFAULT NULL,
+    p_zona_cobertura VARCHAR(100) DEFAULT NULL,
+    p_numero_habilitacion VARCHAR(20) DEFAULT NULL,
+    p_pais_destino VARCHAR(50) DEFAULT NULL,
+    p_descuento_especial NUMERIC(3,2) DEFAULT NULL
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_cliente cliente%ROWTYPE;  -- registro estructurado que contiene las mimas columnas y tipos de dato que cliente
+BEGIN
+    IF p_id_cliente IS NULL THEN
+        RAISE EXCEPTION 'El id del cliente es obligatorio';
+    END IF;
+
+    IF p_nuevo_tipo IS NULL THEN
+        RAISE EXCEPTION 'El nuevo tipo de cliente es obligatorio';
+    END IF;
+
+    -- Bloqueamos al cliente para que dos cambios de tipo no compitan
+    SELECT *
+      INTO v_cliente
+      FROM cliente
+     WHERE id = p_id_cliente
+       FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'El cliente % no existe', p_id_cliente;
+    END IF;
+
+    IF NOT v_cliente.estado_activo THEN
+        RAISE EXCEPTION 'El cliente % no esta activo', p_id_cliente;
+    END IF;
+
+    IF v_cliente.tipo = p_nuevo_tipo THEN
+        RAISE EXCEPTION
+            'El cliente % ya es de tipo %', p_id_cliente, p_nuevo_tipo;
+    END IF;
+
+    -- Versionado: el registro viejo queda inactivo y libera la unicidad
+    -- parcial del documento
+    UPDATE cliente
+       SET estado_activo = FALSE
+     WHERE id = p_id_cliente;
+
+    -- Se reutiliza el alta de clientes para crear el nuevo registro activo
+    -- con otro id y el nuevo tipo.
+    CALL p_crear_cliente(
+        p_nuevo_tipo,
+        v_cliente.calle,
+        v_cliente.numero,
+        v_cliente.codigo_postal,
+        v_cliente.tipo_documento,
+        v_cliente.numero_documento,
+        COALESCE(p_nombre, v_cliente.nombre),
+        COALESCE(p_apellido, v_cliente.apellido),
+        COALESCE(p_razon_social, v_cliente.razon_social),
+        p_zona_cobertura,
+        p_numero_habilitacion,
+        p_pais_destino,
+        p_descuento_especial
+    );
 END;
 $$;
 
