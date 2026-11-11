@@ -59,8 +59,8 @@ se conecta con `postgres` ni con el propietario de la base.
 
 Desde la raíz del repositorio:
 
-```bash
-cp .env.example .env
+```powershell
+Copy-Item .env.example .env
 # Editar .env y definir POSTGRES_PASSWORD y APP_DB_PASSWORD
 docker compose up -d --build
 ```
@@ -118,7 +118,7 @@ $env:DB_HOST = "localhost"
 $env:DB_PORT = "5433"
 $env:DB_NAME = "bodegas_del_atuel"
 $env:DB_USER = "rol_api"
-$env:DB_PASSWORD = "ApiBodegas2026"
+$env:DB_PASSWORD = "<clave_de_rol_api_definida_en_.env>"
 ..\.venv\Scripts\python.exe -m uvicorn app.main:app --reload --port 8000
 ```
 
@@ -202,7 +202,7 @@ $env:DB_HOST = "localhost"
 $env:DB_PORT = "5433"
 $env:DB_NAME = "bodegas_del_atuel"
 $env:DB_USER = "rol_api"
-$env:DB_PASSWORD = "ApiBodegas2026"
+$env:DB_PASSWORD = "<clave_de_rol_api_definida_en_.env>"
 ..\.venv\Scripts\python.exe -m pytest -q
 ```
 
