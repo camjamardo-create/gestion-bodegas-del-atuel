@@ -71,9 +71,10 @@ No se usan nombres inventados como `sp_*`. Los procedimientos se invocan con
 
 ## Observaciones de seguridad y operación
 
-- `007_roles.sql` crea `rol_api` con una clave fija de ejemplo. En Docker,
-  `db/initdb/99_password_api.sql` la reemplaza por `APP_DB_PASSWORD`; el `.env`
-  no se versiona.
+- `007_roles.sql` crea `rol_api` y `rol_reporte` **sin clave**. Las claves se
+  fijan por entorno con `db/initdb/99_password_api.sql` a partir de
+  `APP_DB_PASSWORD` y `APP_REPORT_PASSWORD`; no hay credenciales literales en el
+  repositorio y el `.env` no se versiona.
 - La API rechaza cualquier `DB_USER` distinto de `rol_api`. No se conecta con
   `postgres` ni con el propietario de la base.
 - Los scripts de `/docker-entrypoint-initdb.d` solo corren con un volumen vacío.

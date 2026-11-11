@@ -5,6 +5,8 @@
 - [Etapa 3 · Carga masiva](informe_etapa3_carga_masiva.md)
 - [Etapa 4 · Índices](informe_etapa4_indices.md)
 - [Etapa 5 · Consultas](informe_etapa5_consultas.md)
+- [Etapa 6 · API REST](informe/06_api.md)
+- [Etapa 7 · Front web](informe/07_front.md)
 - [Etapa 8 · Despliegue](informe/08_despliegue.md)
 
 ## Despliegue

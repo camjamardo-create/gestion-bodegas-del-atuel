@@ -260,3 +260,14 @@ Tiempos de corrida medidos (con la base cargada):
    `ROLLBACK` por `COMMIT`.
 8. **Sin cambios en migraciones ni tests.** La Etapa 5 solo agrega la carpeta
    `consultas/` y este informe; no modifica `001`–`008` ni `tests/`.
+9. **Fecha y zona horaria.** Los conteos de D1 y D5 dependen de `CURRENT_DATE`.
+   La base del entorno de prueba usa `TimeZone = Etc/UTC`; para reproducir los
+   valores de este informe (D1 = 7.450) hay que ejecutar con la zona local:
+
+   ```bash
+   PGTZ=America/Argentina/Mendoza psql ... -f consultas/delete.sql
+   ```
+
+   Ejecutado en UTC después de las 21:00 de Argentina, `CURRENT_DATE` ya es el
+   día siguiente y D1 elimina 7.466 filas. La diferencia es de calendario, no
+   de la consulta.
