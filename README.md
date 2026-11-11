@@ -393,6 +393,7 @@ docker compose down -v       # borrar también el volumen de PostgreSQL
 | “Port is already allocated” | Cambiar en `.env` `FRONT_PORT`, `API_PORT` o `POSTGRES_PORT` y volver a levantar. Si cambia `POSTGRES_PORT`, actualizar también `DB_PORT`. |
 | La app abre pero no hay vinos | La base tiene solo el seed mínimo; ejecutar la carga completa del paso 6. |
 | No se aplican las migraciones | `db/initdb` solo corre en un volumen vacío. Hacer backup y usar `docker compose down -v` para reiniciar desde cero. |
+| La API o el front reinician con `exec ... no such file or directory` | Los `.sh` quedaron con fin de línea CRLF. El repo incluye `.gitattributes` (`*.sh text eol=lf`); renormalizar con `git add --renormalize .` y reconstruir con `docker compose up -d --build`. |
 | `psql` no está instalado | Los scripts usan `docker run postgres:18` por defecto; dejar `PSQL_MODE=auto` o usar `PSQL_MODE=docker`. |
 | Error de comillas o rutas en Git Bash | Ejecutar desde la raíz del repositorio y usar `ENV_FILE=.env bash scripts/...`. |
 | La API responde pero el front no | Verificar `API_BASE_URL=/api` y que `http://localhost:8080/api/salud` responda. |
