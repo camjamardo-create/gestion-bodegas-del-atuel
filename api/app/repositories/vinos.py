@@ -153,14 +153,20 @@ def obtener_stock(conn: Connection, codigo: int) -> dict[str, Any]:
         cur.execute(
             """
             SELECT
-                COALESCE(
-                    (SELECT cantidad FROM stock_deposito WHERE codigo_vino = %s),
-                    0
-                ) AS stock_deposito,
-                COALESCE(
-                    (SELECT SUM(cantidad) FROM stock_sala WHERE codigo_vino = %s),
-                    0
-                ) AS stock_sala
+                stock_deposito,
+                stock_sala,
+                stock_deposito + stock_sala AS stock_total
+            FROM (
+                SELECT
+                    COALESCE(
+                        (SELECT cantidad FROM stock_deposito WHERE codigo_vino = %s),
+                        0
+                    ) AS stock_deposito,
+                    COALESCE(
+                        (SELECT SUM(cantidad) FROM stock_sala WHERE codigo_vino = %s),
+                        0
+                    ) AS stock_sala
+            ) AS stock
             """,
             (codigo, codigo),
         )

@@ -38,7 +38,7 @@ def _detalle(conn: Any, codigo: int) -> dict[str, Any] | None:
         "maridajes": repo.obtener_maridajes(conn, codigo),
         "stock_deposito": stock["stock_deposito"],
         "stock_sala": stock["stock_sala"],
-        "stock_total": stock["stock_deposito"] + stock["stock_sala"],
+        "stock_total": stock["stock_total"],
     }
 
 
