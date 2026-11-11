@@ -20,14 +20,17 @@ RUN python -m pip install --upgrade pip \
     && python -m pip install -r requirements.txt
 
 COPY --chown=app:app app ./app
+COPY --chown=app:app docker-entrypoint.sh /usr/local/bin/api-entrypoint.sh
+
+RUN chmod 0555 /usr/local/bin/api-entrypoint.sh
 
 USER 10001:10001
 
 EXPOSE 8000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD ["python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/salud', timeout=3)"]
+    CMD ["python", "-c", "import os, urllib.request; urllib.request.urlopen('http://127.0.0.1:' + os.getenv('PORT', '8000') + '/salud', timeout=3)"]
 
-# La API corre detras de un proxy interno o de la plataforma. No se publica
-# el puerto de PostgreSQL desde este contenedor.
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips=*"]
+# La API corre detras de un proxy interno o de la plataforma. El puerto se
+# toma de PORT (8000 por defecto). No se publica el puerto de PostgreSQL.
+ENTRYPOINT ["/usr/local/bin/api-entrypoint.sh"]

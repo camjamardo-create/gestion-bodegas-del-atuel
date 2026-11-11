@@ -50,6 +50,7 @@ excluido por `.gitignore`.
 | `DB_PASSWORD` | Clave de `rol_api` para ejecución local | Obligatoria |
 | `DB_SSLMODE` | Modo SSL de PostgreSQL (`disable` local, `require`/`verify-full` en nube) | `require` |
 | `CORS_ORIGINS` | Orígenes permitidos del front, separados por coma | `http://localhost:8080` |
+| `PORT` | Puerto interno del contenedor de la API | `8000` |
 | `DB_POOL_MIN_SIZE` | Conexiones mínimas del pool | `1` |
 | `DB_POOL_MAX_SIZE` | Conexiones máximas del pool | `10` |
 | `DB_POOL_TIMEOUT` | Segundos de espera por conexión | `10` |

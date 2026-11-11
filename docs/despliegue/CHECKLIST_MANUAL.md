@@ -213,6 +213,7 @@ DB_USER=rol_api
 DB_PASSWORD=<secreto>
 DB_SSLMODE=require          # o verify-full con la CA del proveedor
 CORS_ORIGINS=https://<dominio-del-front>
+PORT=8000
 DB_POOL_MIN_SIZE=1
 DB_POOL_MAX_SIZE=10
 DB_POOL_TIMEOUT=10

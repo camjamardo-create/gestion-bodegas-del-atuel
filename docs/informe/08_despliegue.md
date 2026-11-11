@@ -136,6 +136,7 @@ Variables principales:
 | `DB_PASSWORD` | Clave del rol de la API. |
 | `DB_SSLMODE` | `require` en nube; `disable` solo en local. |
 | `CORS_ORIGINS` | Origen HTTPS del front, separado por comas. |
+| `PORT` | Puerto interno de la API (8000 por defecto). |
 | `DB_POOL_MIN_SIZE`, `DB_POOL_MAX_SIZE`, `DB_POOL_TIMEOUT` | Pool y timeouts. |
 
 `/salud` ejecuta una consulta real y devuelve `current_user`; no es un
@@ -220,6 +221,7 @@ Las restauraciones se hicieron en bases temporales
 |---|---|
 | `GET /salud` | `{"status":"ok","base_de_datos":"ok","current_user":"rol_api"}` |
 | `GET /api/salud` a través del front | Mismo resultado. |
+| API con `PORT=8123` | Respondió `/salud` en el puerto configurado. |
 | `pytest api/tests` | 13 pruebas aprobadas. |
 | `probar_regla_en_nube` | HTTP 409, stock antes/después igual, sin comprobante nuevo. |
 
