@@ -8,11 +8,13 @@ from typing import AsyncIterator
 
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 from psycopg import Error as PsycopgError
 from psycopg_pool import PoolTimeout
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import __version__, db
+from .config import cors_origins_desde_entorno
 from .errors import (
     ApiError,
     manejar_api_error,
@@ -52,6 +54,15 @@ app = FastAPI(
     ),
     version=__version__,
     lifespan=lifespan,
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=list(cors_origins_desde_entorno()),
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Authorization", "Content-Type"],
+    max_age=600,
 )
 
 app.add_exception_handler(ApiError, manejar_api_error)

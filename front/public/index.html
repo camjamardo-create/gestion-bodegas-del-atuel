@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#4a1020">
+  <meta name="description" content="Panel de gestión de Bodegas del Atuel: vinos, clientes, ventas, stock y reportes.">
+  <title>Bodegas del Atuel · Panel</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#contenido">Saltar al contenido</a>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">BA</span>
+      <div>
+        <p class="brand-kicker">Bodegas del Atuel</p>
+        <h1>Panel de gestión</h1>
+      </div>
+    </div>
+
+    <nav class="main-nav" aria-label="Secciones">
+      <a href="#/inicio" data-route="inicio">Inicio</a>
+      <a href="#/vinos" data-route="vinos">Vinos</a>
+      <a href="#/clientes" data-route="clientes">Clientes</a>
+      <a href="#/ventas" data-route="ventas">Ventas</a>
+      <a href="#/stock" data-route="stock">Stock</a>
+      <a href="#/reportes" data-route="reportes">Reportes</a>
+    </nav>
+
+    <a class="status-chip" id="api-status" href="#/inicio" aria-live="polite">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span class="status-label">Verificando API…</span>
+    </a>
+  </header>
+
+  <main id="contenido" class="shell" tabindex="-1">
+    <noscript>
+      <section class="card">
+        <h2>JavaScript deshabilitado</h2>
+        <p>Este panel necesita JavaScript para consultar la API de Bodegas del Atuel.</p>
+      </section>
+    </noscript>
+    <section id="view" aria-live="polite">
+      <div class="loading">Cargando panel…</div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <span>Bodegas del Atuel · TPI Bases de Datos</span>
+    <span class="muted">Los importes se muestran con la precisión que entrega PostgreSQL. La imagen del front es la misma en local y en la nube.</span>
+  </footer>
+
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="/config.js"></script>
+  <script src="/assets/app.js" defer></script>
+</body>
+</html>

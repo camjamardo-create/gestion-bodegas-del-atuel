@@ -61,7 +61,7 @@ createdb -U postgres -E UTF8 -T template0 bodegas_del_atuel
 
 ### 2. Aplicar todas las migraciones
 
-Las migraciones deben ejecutarse en orden, desde `001` hasta `007`. No alcanza con ejecutar solo `001_esquema.sql`.
+Las migraciones deben ejecutarse en orden, desde `001` hasta `008`. No alcanza con ejecutar solo `001_esquema.sql`.
 
 **Bash / Git Bash / WSL:**
 
@@ -73,6 +73,7 @@ Las migraciones deben ejecutarse en orden, desde `001` hasta `007`. No alcanza c
     psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f "db/migrations/005_triggers.sql"
     psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f "db/migrations/006_vistas.sql"
     psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f "db/migrations/007_roles.sql"
+    psql -U postgres -d bodegas_del_atuel -v ON_ERROR_STOP=1 -f "db/migrations/008_indices.sql"
 ```
 
 ### 3. Ejecutar los tests
@@ -130,3 +131,92 @@ ciclo lectivo 2026.
 
 «Bodegas del Atuel» es una empresa ficticia. Los datos utilizados son generados
 con fines exclusivamente académicos.
+
+---
+
+## Despliegue local y en la nube (Etapas 7 y 8)
+
+El repositorio incluye una API FastAPI, un front estático servido por Nginx y
+una configuración de referencia para desplegar el conjunto sin publicar la base
+de datos ni la API.
+
+### Front y API en local
+
+1. Copiar `.env.example` a `.env` y completar los valores locales.
+2. Construir y levantar los servicios:
+
+```bash
+docker compose up -d --build
+```
+
+3. Abrir `http://localhost:8080`. El front usa `API_BASE_URL=/api` y Nginx
+   proxya las llamadas a la API.
+4. Verificar la salud de la API:
+
+```bash
+curl http://localhost:8080/api/salud
+```
+
+El resultado debe incluir `"current_user":"rol_api"` y `"base_de_datos":"ok"`.
+En local PostgreSQL no publica TLS; por eso `.env` usa `DB_SSLMODE=disable`.
+En la nube se debe usar `require` o `verify-full`.
+
+### Scripts de operación
+
+Los scripts están en `scripts/` y tienen equivalentes PowerShell y Bash:
+
+```powershell
+$env:ENV_FILE = ".env"
+.\scripts\aplicar_migraciones.ps1
+.\scripts\cargar_datos.ps1 -Modo full
+.\scripts\consultas_control.ps1
+.\scripts\backup.ps1
+.\scripts\restaurar_y_verificar.ps1 -BackupFile "backups\<archivo>.dump" -EliminarRestaurada
+.\scripts\probar_regla_en_nube.ps1
+.\scripts\probar_acceso_no_autorizado.ps1
+```
+
+```bash
+ENV_FILE=.env bash scripts/aplicar_migraciones.sh
+ENV_FILE=.env bash scripts/cargar_datos.sh --modo full
+ENV_FILE=.env bash scripts/consultas_control.sh
+ENV_FILE=.env bash scripts/backup.sh --formato ambos
+ENV_FILE=.env bash scripts/restaurar_y_verificar.sh --backup backups/<archivo>.dump --eliminar
+ENV_FILE=.env bash scripts/probar_regla_en_nube.sh
+ENV_FILE=.env bash scripts/probar_acceso_no_autorizado.sh
+```
+
+Las migraciones se aplican con el rol propietario. La API se conecta siempre
+con `rol_api`. Las claves se pasan por entorno y no se imprimen.
+
+### Despliegue de referencia con TLS
+
+El archivo `docker-compose.production.yml` levanta Caddy, el front, la API y
+PostgreSQL en una red interna. Solo Caddy publica `80` y `443`; la base y la
+API no tienen puertos publicados.
+
+```bash
+cp .env.production.example .env.production
+# completar los valores reales en .env.production, sin commitearlo
+docker compose --env-file .env.production -f docker-compose.production.yml up -d --build
+```
+
+Antes de desplegar:
+
+- elegir un proveedor y una región;
+- restringir PostgreSQL por red privada, allowlist o deshabilitando el acceso
+  externo;
+- usar `DB_SSLMODE=require` como mínimo (o `verify-full` con la CA del
+  proveedor);
+- configurar `CORS_ORIGINS` con el origen HTTPS real;
+- rotar las credenciales y verificar que las antiguas ya no funcionen.
+
+La guía completa, la comparación de proveedores y el checklist manual están en:
+
+- [`docs/despliegue/CHECKLIST_MANUAL.md`](docs/despliegue/CHECKLIST_MANUAL.md)
+- [`docs/despliegue/NOTAS_AUDITORIA.md`](docs/despliegue/NOTAS_AUDITORIA.md)
+- [`docs/informe/08_despliegue.md`](docs/informe/08_despliegue.md)
+
+> **Importante:** el repositorio no incluye credenciales reales. `.env`,
+> `.env.production`, `backups/` y los dumps están ignorados por Git. Si se
+> reutiliza una credencial que estuvo en el historial, debe rotarse.

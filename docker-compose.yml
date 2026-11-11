@@ -7,6 +7,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definir POSTGRES_PASSWORD en .env}
       APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Definir APP_DB_PASSWORD en .env}
+      APP_REPORT_PASSWORD: ${APP_REPORT_PASSWORD:?Definir APP_REPORT_PASSWORD en .env}
     ports:
       - "${POSTGRES_PORT:-5433}:5432"
     volumes:
@@ -34,6 +35,8 @@ services:
       DB_NAME: bodegas_del_atuel
       DB_USER: rol_api
       DB_PASSWORD: ${APP_DB_PASSWORD:?Definir APP_DB_PASSWORD en .env}
+      DB_SSLMODE: ${DB_SSLMODE:-disable}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
       DB_POOL_MIN_SIZE: ${DB_POOL_MIN_SIZE:-1}
       DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-10}
       DB_POOL_TIMEOUT: ${DB_POOL_TIMEOUT:-10}
@@ -52,6 +55,21 @@ services:
       timeout: 5s
       retries: 12
       start_period: 10s
+    restart: unless-stopped
+
+  front:
+    build:
+      context: ./front
+    container_name: bodegas_del_atuel_front
+    environment:
+      # /api funciona con el proxy interno de nginx. Para un front separado
+      # de la API, usar una URL absoluta, por ejemplo https://api.example.com.
+      API_BASE_URL: ${API_BASE_URL:-/api}
+    ports:
+      - "${FRONT_PORT:-8080}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:
