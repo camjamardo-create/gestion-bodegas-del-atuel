@@ -25,6 +25,58 @@ herramientas que oculten el SQL.
 
 ---
 
+## URLs y estado
+
+| Entorno | Front | API / salud | Cómo se levanta |
+|---|---|---|---|
+| Local | <http://localhost:8080> | <http://localhost:8000/salud> | Docker Compose (guía de abajo) |
+| Nube | pendiente de publicación | pendiente de publicación | `docker-compose.production.yml` + checklist |
+
+> **Versión en la nube:** el repositorio deja preparada toda la configuración de
+> despliegue, pero no se creó un entorno cloud real ni se usaron credenciales de
+> proveedores. Por eso no se declara una URL inventada. Cuando se publique, la
+> URL real se reemplaza en esta tabla y en el
+> [checklist de despliegue](docs/despliegue/CHECKLIST_MANUAL.md).
+
+---
+
+## Inicio rápido
+
+Requisitos: Docker Desktop con Docker Compose y Git. Desde una terminal:
+
+```bash
+git clone https://github.com/camjamardo-create/gestion-bodegas-del-atuel.git
+cd gestion-bodegas-del-atuel
+cp .env.example .env
+# Editar .env y reemplazar todos los "definir_en_local":
+#   POSTGRES_PASSWORD, APP_DB_PASSWORD, APP_REPORT_PASSWORD y DB_PASSWORD
+docker compose up -d --build
+```
+
+Abrir <http://localhost:8080>. La primera vez, el volumen nuevo aplica las
+migraciones `001` a `008` y carga un catálogo mínimo para que la API responda.
+
+Para cargar el volumen completo de datos y ejecutar las pruebas, seguir los
+pasos [6](#6-cargar-los-datos-completos) y
+[9](#9-ejecutar-los-tests-de-la-base-y-de-la-api-opcional).
+
+---
+
+## Estado verificado
+
+| Verificación | Resultado |
+|---|---|
+| Carga completa (Etapa 3) | 150.000 comprobantes, 564.328 renglones, 20.000 clientes, 1.200 ingresos, 500 vinos. |
+| Controles de integridad | 11 consultas de control, todas con 0 problemas. |
+| Estructura | 30 tablas, 16 triggers, 41 índices, 3 vistas. |
+| Tests SQL | 133 verificaciones `OK`, sin fallos. |
+| Tests de API | 13 pruebas de integración aprobadas. |
+| Backup y restauración | `.dump` y `.sql.gz` restauran 30 tablas y 796.681 filas. |
+| Regla de negocio | Venta sin stock rechazada con HTTP `409`, sin modificar stock ni dejar comprobante. |
+| Front y API | Servicios `healthy`; `/salud` responde como `rol_api`. |
+
+---
+
 ## Integrantes
 
 |   Integrante   |   Legajo   |   GitHub   |
@@ -35,14 +87,40 @@ herramientas que oculten el SQL.
 ---
 
 ## Requisitos
-Para trabajar con el proyecto en local:
 
-- [PostgreSQL 14+](https://www.postgresql.org/download/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- Cliente SQL: `psql`, DBeaver o pgAdmin
-- [draw.io](https://app.diagrams.net/) para editar el DER
-- Python 3.11+ (Etapa 3, carga masiva)
-- Git
+| Ruta de trabajo | Qué necesitás |
+|---|---|
+| **Recomendada:** Docker Compose | [Docker Desktop](https://www.docker.com/products/docker-desktop/) con Compose y Git. No hace falta instalar PostgreSQL. |
+| Carga masiva y tests desde la máquina | Python 3.11+ (probado con 3.12). |
+| Alternativa sin Docker | PostgreSQL 18 y `psql`. |
+| Diagramas (opcional) | [draw.io](https://app.diagrams.net/) para editar DER y MER. |
+
+Verificar las herramientas principales:
+
+```bash
+docker --version
+docker compose version
+git --version
+```
+
+---
+
+## Estructura del repositorio
+
+| Ruta | Contenido |
+|---|---|
+| `db/migrations/` | Migraciones `001` a `008`: esquema, constraints, funciones, procedimientos, triggers, vistas, roles e índices. |
+| `db/initdb/` | Inicialización automática de un volumen nuevo: migraciones, seed mínimo y claves de roles por entorno. |
+| `db/seed/` | Generador de la carga masiva de la Etapa 3 y controles de integridad. |
+| `consultas/` | Consignas SQL de la Etapa 5 (`select`, `update`, `insert`, `delete`). |
+| `tests/` | Suite SQL de reglas de negocio RN-01 a RN-15. |
+| `api/` | API FastAPI + psycopg 3, repositorios SQL y pruebas de integración. |
+| `front/` | Panel web estático servido por Nginx. |
+| `scripts/` | Migraciones, carga, control, backup, restauración y pruebas de aceptación. |
+| `deploy/` | Configuración de PostgreSQL con TLS y Caddy para producción. |
+| `docs/` | Informes por etapa, DER, MER, diccionario, matriz de trazabilidad y OpenAPI. |
+| `docker-compose.yml` | Stack local: PostgreSQL + API + front. |
+| `docker-compose.production.yml` | Stack de referencia para publicar con HTTPS. |
 
 ---
 
@@ -52,13 +130,10 @@ Esta es la forma recomendada de probar el proyecto completo: PostgreSQL, API y
 front. Todo se levanta con Docker Compose; no hace falta instalar PostgreSQL en
 la máquina.
 
-### 1. Requisitos
+### 1. Verificar Docker y puertos
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) con Docker Compose.
-- Git.
+- Docker Desktop con Docker Compose.
 - Puertos libres: `5433` (PostgreSQL), `8000` (API) y `8080` (front).
-- Opcional: Python 3.11+ (probado con 3.12) para ejecutar la carga masiva y los
-  tests desde la máquina.
 
 Verificar que Docker esté funcionando:
 
@@ -66,6 +141,10 @@ Verificar que Docker esté funcionando:
 docker --version
 docker compose version
 ```
+
+Si algún puerto está ocupado, cambiarlo en `.env` (`POSTGRES_PORT`, `API_PORT` o
+`FRONT_PORT`) antes de levantar. Si cambiás `POSTGRES_PORT`, actualizá también
+`DB_PORT` y `DATABASE_URL`.
 
 ### 2. Preparar las variables de entorno
 
@@ -133,6 +212,33 @@ docker compose ps
 
 Los servicios `postgres`, `api` y `front` deben aparecer como `healthy` o
 `running`. Si todavía están iniciando, esperar unos segundos y repetir.
+
+#### Migraciones
+
+En un volumen vacío, las migraciones `001` a `008` se aplican automáticamente.
+Para aplicarlas manualmente sobre una base **recién creada y vacía**:
+
+**PowerShell:**
+
+```powershell
+$env:ENV_FILE = ".env"
+.\scripts\aplicar_migraciones.ps1
+```
+
+**Bash / Git Bash / WSL:**
+
+```bash
+ENV_FILE=.env bash scripts/aplicar_migraciones.sh
+```
+
+El script las ejecuta en orden con el rol propietario y fija las claves de
+`rol_api` y `rol_reporte` desde `.env`. No imprime credenciales. La alternativa
+manual, migración por migración, está en
+[la sección sin Docker](#2-aplicar-todas-las-migraciones).
+
+> Las migraciones **no son idempotentes**: crean tipos, tablas y constraints. Si
+> la base ya tiene esos objetos, el script falla. En local, para empezar de cero
+> usar `docker compose down -v`; en un servidor, crear una base nueva.
 
 ### 4. Abrir el front
 
@@ -347,6 +453,8 @@ docker compose exec -T postgres dropdb -U postgres bodegas_del_atuel_tests
 Estos comandos funcionan igual en Bash, Git Bash, WSL y PowerShell. El último
 elimina la base temporal; si algún test falla, ejecutar igualmente el `dropdb`
 para limpiar. Resultado esperado: `Todos los tests pasaron. Se ejecuta ROLLBACK`.
+En la corrida de referencia se imprimen **133 verificaciones `OK`** y ningún
+`FALLO`.
 
 Tests de integración de la API desde la máquina: usar la base principal ya
 levantada y cargada, instalar las dependencias de desarrollo y definir las
@@ -489,6 +597,34 @@ y verificar:
 | `\dT` | Los tipos: `tipo_vino`, `tipo_cliente`, `tipo_cepa`, `tipo_empleado`, `tipo_estado` y `dia_semana` (también aparecen los dominios) |
 
 Salir de `psql` con `\q`.
+
+---
+
+## Documentación
+
+El índice completo está en [`docs/README.md`](docs/README.md).
+
+**Informes por etapa**
+
+- [Etapa 3 · Carga masiva](docs/informe_etapa3_carga_masiva.md)
+- [Etapa 4 · Índices](docs/informe_etapa4_indices.md)
+- [Etapa 5 · Consultas](docs/informe_etapa5_consultas.md)
+- [Etapa 6 · API REST](docs/informe/06_api.md)
+- [Etapa 7 · Front web](docs/informe/07_front.md)
+- [Etapa 8 · Despliegue](docs/informe/08_despliegue.md)
+
+**Modelo y contratos**
+
+- [DER](docs/DER-Bodegas-del-Atuel.jpg) · [MER](docs/MER-Bodegas-del-Atuel.jpg)
+- [Diccionario de datos](docs/diccionario-de-datos.xlsx)
+- [Matriz de trazabilidad](docs/matriz-de-trazabilidad.xlsx)
+- [OpenAPI de la API](docs/api/openapi.json)
+
+**Operación y pruebas**
+
+- [Guía de la API](api/README.md) · [Pruebas SQL](tests/README.md)
+- [Checklist manual de despliegue](docs/despliegue/CHECKLIST_MANUAL.md)
+- [Notas de auditoría de secretos](docs/despliegue/NOTAS_AUDITORIA.md)
 
 ---
 
