@@ -12,3 +12,5 @@ db/seed/restore_test/
 
 # Salidas temporales
 db/seed/.benchmark/
+.pytest_cache/
+.ruff_cache/

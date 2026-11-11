@@ -1,0 +1,3080 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Bodegas del Atuel API",
+    "description": "API REST de la Etapa 6 sobre PostgreSQL. La API usa SQL parametrizado, un pool de conexiones y transacciones explicitas. Las reglas de negocio (stock, totales, descuentos, estados y auditoria) siguen viviendo en la base.",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/salud": {
+      "get": {
+        "tags": [
+          "Salud"
+        ],
+        "summary": "Salud",
+        "operationId": "salud_salud_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaludOut"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vinos": {
+      "get": {
+        "tags": [
+          "Vinos"
+        ],
+        "summary": "Listar Vinos",
+        "operationId": "listar_vinos_vinos_get",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "tinto",
+                    "blanco",
+                    "rosado",
+                    "espumante"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tipo"
+            }
+          },
+          {
+            "name": "cepa",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Nombre o id de cepa",
+              "title": "Cepa"
+            },
+            "description": "Nombre o id de cepa"
+          },
+          {
+            "name": "bodega",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "CUIT de la bodega",
+              "title": "Bodega"
+            },
+            "description": "CUIT de la bodega"
+          },
+          {
+            "name": "anada",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Anada"
+            }
+          },
+          {
+            "name": "nombre",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Nombre"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          },
+          {
+            "name": "orden",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "codigo",
+                "nombre",
+                "precio",
+                "anada",
+                "graduacion"
+              ],
+              "type": "string",
+              "default": "codigo",
+              "title": "Orden"
+            }
+          },
+          {
+            "name": "direccion",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "type": "string",
+              "default": "asc",
+              "title": "Direccion"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinoListaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Vinos"
+        ],
+        "summary": "Crear Vino",
+        "operationId": "crear_vino_vinos_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VinoCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinoDetalleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vinos/{codigo}": {
+      "get": {
+        "tags": [
+          "Vinos"
+        ],
+        "summary": "Obtener Vino",
+        "operationId": "obtener_vino_vinos__codigo__get",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Codigo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinoDetalleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Vinos"
+        ],
+        "summary": "Actualizar Vino",
+        "operationId": "actualizar_vino_vinos__codigo__put",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Codigo"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VinoUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VinoDetalleOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Vinos"
+        ],
+        "summary": "Eliminar Vino",
+        "operationId": "eliminar_vino_vinos__codigo__delete",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Codigo"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clientes": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Listar Clientes",
+        "operationId": "listar_clientes_clientes_get",
+        "parameters": [
+          {
+            "name": "tipo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "cliente_comun",
+                    "socio_club",
+                    "distribuidor",
+                    "exportador"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tipo"
+            }
+          },
+          {
+            "name": "estado_activo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Estado Activo"
+            }
+          },
+          {
+            "name": "documento",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Documento"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteListaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Crear Cliente",
+        "operationId": "crear_cliente_clientes_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClienteCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/clientes/{id_cliente}": {
+      "get": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Obtener Cliente",
+        "operationId": "obtener_cliente_clientes__id_cliente__get",
+        "parameters": [
+          {
+            "name": "id_cliente",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id Cliente"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Actualizar Cliente",
+        "operationId": "actualizar_cliente_clientes__id_cliente__put",
+        "parameters": [
+          {
+            "name": "id_cliente",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id Cliente"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClienteUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClienteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Clientes"
+        ],
+        "summary": "Eliminar Cliente",
+        "operationId": "eliminar_cliente_clientes__id_cliente__delete",
+        "parameters": [
+          {
+            "name": "id_cliente",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Id Cliente"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comprobantes": {
+      "post": {
+        "tags": [
+          "Comprobantes"
+        ],
+        "summary": "Crear Comprobante",
+        "operationId": "crear_comprobante_comprobantes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComprobanteCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComprobanteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/comprobantes/{numero}": {
+      "get": {
+        "tags": [
+          "Comprobantes"
+        ],
+        "summary": "Obtener Comprobante",
+        "operationId": "obtener_comprobante_comprobantes__numero__get",
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComprobanteOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transferencias": {
+      "post": {
+        "tags": [
+          "Transferencias"
+        ],
+        "summary": "Crear Transferencia",
+        "operationId": "crear_transferencia_transferencias_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferenciaCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferenciaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transferencias/{numero}": {
+      "get": {
+        "tags": [
+          "Transferencias"
+        ],
+        "summary": "Obtener Transferencia",
+        "operationId": "obtener_transferencia_transferencias__numero__get",
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferenciaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transferencias/{numero}/renglones": {
+      "post": {
+        "tags": [
+          "Transferencias"
+        ],
+        "summary": "Agregar Renglon",
+        "operationId": "agregar_renglon_transferencias__numero__renglones_post",
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Numero"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/RenglonMovimientoIn"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/RenglonMovimientoIn"
+                    }
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferenciaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transferencias/{numero}/terminar": {
+      "post": {
+        "tags": [
+          "Transferencias"
+        ],
+        "summary": "Terminar Transferencia",
+        "operationId": "terminar_transferencia_transferencias__numero__terminar_post",
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferenciaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/transferencias/{numero}/procesar": {
+      "post": {
+        "tags": [
+          "Transferencias"
+        ],
+        "summary": "Procesar Transferencia",
+        "operationId": "procesar_transferencia_transferencias__numero__procesar_post",
+        "parameters": [
+          {
+            "name": "numero",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Numero"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferenciaOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ingresos": {
+      "post": {
+        "tags": [
+          "Ingresos"
+        ],
+        "summary": "Crear Ingreso",
+        "operationId": "crear_ingreso_ingresos_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngresoCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngresoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ingresos/{codigo}": {
+      "get": {
+        "tags": [
+          "Ingresos"
+        ],
+        "summary": "Obtener Ingreso",
+        "operationId": "obtener_ingreso_ingresos__codigo__get",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Codigo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngresoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ingresos/{codigo}/renglones": {
+      "post": {
+        "tags": [
+          "Ingresos"
+        ],
+        "summary": "Agregar Renglon",
+        "operationId": "agregar_renglon_ingresos__codigo__renglones_post",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Codigo"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/RenglonMovimientoIn"
+                  },
+                  {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/RenglonMovimientoIn"
+                    }
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngresoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ingresos/{codigo}/terminar": {
+      "post": {
+        "tags": [
+          "Ingresos"
+        ],
+        "summary": "Terminar Ingreso",
+        "operationId": "terminar_ingreso_ingresos__codigo__terminar_post",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Codigo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngresoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ingresos/{codigo}/procesar": {
+      "post": {
+        "tags": [
+          "Ingresos"
+        ],
+        "summary": "Procesar Ingreso",
+        "operationId": "procesar_ingreso_ingresos__codigo__procesar_post",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Codigo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IngresoOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reportes/top-vinos": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "summary": "Top Vinos",
+        "operationId": "top_vinos_reportes_top_vinos_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TopVinoOut"
+                  },
+                  "type": "array",
+                  "title": "Response Top Vinos Reportes Top Vinos Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reportes/ventas-por-sala": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "summary": "Ventas Por Sala",
+        "operationId": "ventas_por_sala_reportes_ventas_por_sala_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/VentaSalaOut"
+                  },
+                  "type": "array",
+                  "title": "Response Ventas Por Sala Reportes Ventas Por Sala Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reportes/vinos-sin-stock": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "summary": "Vinos Sin Stock",
+        "operationId": "vinos_sin_stock_reportes_vinos_sin_stock_get",
+        "parameters": [
+          {
+            "name": "sala",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "description": "id de la sala de venta",
+              "title": "Sala"
+            },
+            "description": "id de la sala de venta"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/VinoSinStockOut"
+                  },
+                  "title": "Response Vinos Sin Stock Reportes Vinos Sin Stock Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reportes/transportista-activo": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "summary": "Transportista Activo",
+        "operationId": "transportista_activo_reportes_transportista_activo_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/TransportistaActivoOut"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Transportista Activo Reportes Transportista Activo Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reportes/trazabilidad/{codigo}": {
+      "get": {
+        "tags": [
+          "Reportes"
+        ],
+        "summary": "Trazabilidad",
+        "operationId": "trazabilidad_reportes_trazabilidad__codigo__get",
+        "parameters": [
+          {
+            "name": "codigo",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Codigo"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrazabilidadOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/": {
+      "get": {
+        "tags": [
+          "Raiz"
+        ],
+        "summary": "Raiz",
+        "operationId": "raiz__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Raiz  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BodegaOut": {
+        "properties": {
+          "cuit": {
+            "type": "string",
+            "title": "Cuit"
+          },
+          "razon_social": {
+            "type": "string",
+            "title": "Razon Social"
+          },
+          "calle": {
+            "type": "string",
+            "title": "Calle"
+          },
+          "numero": {
+            "type": "string",
+            "title": "Numero"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cuit",
+          "razon_social",
+          "calle",
+          "numero"
+        ],
+        "title": "BodegaOut"
+      },
+      "CepaOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "tinta",
+              "blanca"
+            ],
+            "title": "Tipo"
+          },
+          "porcentaje": {
+            "type": "string",
+            "title": "Porcentaje"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nombre",
+          "tipo",
+          "porcentaje"
+        ],
+        "title": "CepaOut"
+      },
+      "ClienteCreate": {
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "cliente_comun",
+              "socio_club",
+              "distribuidor",
+              "exportador"
+            ],
+            "title": "Tipo"
+          },
+          "nombre": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nombre"
+          },
+          "apellido": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apellido"
+          },
+          "razon_social": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Razon Social"
+          },
+          "calle": {
+            "type": "string",
+            "maxLength": 60,
+            "minLength": 1,
+            "title": "Calle"
+          },
+          "numero": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 1,
+            "title": "Numero"
+          },
+          "codigo_postal": {
+            "type": "string",
+            "maxLength": 8,
+            "minLength": 4,
+            "title": "Codigo Postal"
+          },
+          "tipo_documento": {
+            "type": "string",
+            "maxLength": 10,
+            "minLength": 1,
+            "title": "Tipo Documento"
+          },
+          "numero_documento": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Numero Documento"
+          },
+          "zona_cobertura": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zona Cobertura"
+          },
+          "numero_habilitacion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero Habilitacion"
+          },
+          "pais_destino": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pais Destino"
+          },
+          "descuento_especial": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descuento Especial"
+          },
+          "permisos": {
+            "items": {
+              "$ref": "#/components/schemas/PermisoIn"
+            },
+            "type": "array",
+            "title": "Permisos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "tipo",
+          "calle",
+          "numero",
+          "codigo_postal",
+          "tipo_documento",
+          "numero_documento"
+        ],
+        "title": "ClienteCreate"
+      },
+      "ClienteListaOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ClienteOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "ClienteListaOut"
+      },
+      "ClienteOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "cliente_comun",
+              "socio_club",
+              "distribuidor",
+              "exportador"
+            ],
+            "title": "Tipo"
+          },
+          "nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nombre"
+          },
+          "apellido": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apellido"
+          },
+          "razon_social": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Razon Social"
+          },
+          "calle": {
+            "type": "string",
+            "title": "Calle"
+          },
+          "numero": {
+            "type": "string",
+            "title": "Numero"
+          },
+          "codigo_postal": {
+            "type": "string",
+            "title": "Codigo Postal"
+          },
+          "tipo_documento": {
+            "type": "string",
+            "title": "Tipo Documento"
+          },
+          "numero_documento": {
+            "type": "string",
+            "title": "Numero Documento"
+          },
+          "estado_activo": {
+            "type": "boolean",
+            "title": "Estado Activo"
+          },
+          "fecha_alta": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha Alta"
+          },
+          "zona_cobertura": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zona Cobertura"
+          },
+          "numero_habilitacion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero Habilitacion"
+          },
+          "pais_destino": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pais Destino"
+          },
+          "descuento_especial": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descuento Especial"
+          },
+          "permisos": {
+            "items": {
+              "$ref": "#/components/schemas/PermisoOut"
+            },
+            "type": "array",
+            "title": "Permisos"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "nombre",
+          "apellido",
+          "razon_social",
+          "calle",
+          "numero",
+          "codigo_postal",
+          "tipo_documento",
+          "numero_documento",
+          "estado_activo",
+          "fecha_alta"
+        ],
+        "title": "ClienteOut"
+      },
+      "ClienteResumenOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "cliente_comun",
+              "socio_club",
+              "distribuidor",
+              "exportador"
+            ],
+            "title": "Tipo"
+          },
+          "nombre": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nombre"
+          },
+          "apellido": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apellido"
+          },
+          "razon_social": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Razon Social"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "tipo",
+          "nombre",
+          "apellido",
+          "razon_social"
+        ],
+        "title": "ClienteResumenOut"
+      },
+      "ClienteUpdate": {
+        "properties": {
+          "tipo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "cliente_comun",
+                  "socio_club",
+                  "distribuidor",
+                  "exportador"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo"
+          },
+          "nombre": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nombre"
+          },
+          "apellido": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Apellido"
+          },
+          "razon_social": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Razon Social"
+          },
+          "calle": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 60,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Calle"
+          },
+          "numero": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero"
+          },
+          "codigo_postal": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8,
+                "minLength": 4
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Codigo Postal"
+          },
+          "tipo_documento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 10,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo Documento"
+          },
+          "numero_documento": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero Documento"
+          },
+          "estado_activo": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estado Activo"
+          },
+          "zona_cobertura": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zona Cobertura"
+          },
+          "numero_habilitacion": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Numero Habilitacion"
+          },
+          "pais_destino": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 50
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pais Destino"
+          },
+          "descuento_especial": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Descuento Especial"
+          },
+          "permisos": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PermisoIn"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Permisos"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "ClienteUpdate"
+      },
+      "ComposicionIn": {
+        "properties": {
+          "id_cepa": {
+            "type": "integer",
+            "title": "Id Cepa"
+          },
+          "porcentaje": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Porcentaje"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id_cepa",
+          "porcentaje"
+        ],
+        "title": "ComposicionIn"
+      },
+      "ComprobanteCreate": {
+        "properties": {
+          "id_cliente": {
+            "type": "integer",
+            "title": "Id Cliente"
+          },
+          "id_sala_venta": {
+            "type": "integer",
+            "title": "Id Sala Venta"
+          },
+          "fecha": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fecha"
+          },
+          "renglones": {
+            "items": {
+              "$ref": "#/components/schemas/RenglonComprobanteIn"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Renglones"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id_cliente",
+          "id_sala_venta",
+          "renglones"
+        ],
+        "title": "ComprobanteCreate"
+      },
+      "ComprobanteOut": {
+        "properties": {
+          "numero": {
+            "type": "integer",
+            "title": "Numero"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "subtotal": {
+            "type": "string",
+            "title": "Subtotal"
+          },
+          "descuento_aplicado": {
+            "type": "string",
+            "title": "Descuento Aplicado"
+          },
+          "descuento_total": {
+            "type": "string",
+            "title": "Descuento Total"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total"
+          },
+          "cliente": {
+            "$ref": "#/components/schemas/ClienteResumenOut"
+          },
+          "sala": {
+            "$ref": "#/components/schemas/SalaOut"
+          },
+          "renglones": {
+            "items": {
+              "$ref": "#/components/schemas/RenglonComprobanteOut"
+            },
+            "type": "array",
+            "title": "Renglones"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero",
+          "fecha",
+          "subtotal",
+          "descuento_aplicado",
+          "descuento_total",
+          "total",
+          "cliente",
+          "sala",
+          "renglones"
+        ],
+        "title": "ComprobanteOut"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "IngresoCreate": {
+        "properties": {
+          "codigo_transportista": {
+            "type": "integer",
+            "title": "Codigo Transportista"
+          },
+          "cuit_bodega": {
+            "type": "string",
+            "maxLength": 11,
+            "minLength": 11,
+            "title": "Cuit Bodega"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "codigo_transportista",
+          "cuit_bodega"
+        ],
+        "title": "IngresoCreate"
+      },
+      "IngresoOut": {
+        "properties": {
+          "codigo": {
+            "type": "integer",
+            "title": "Codigo"
+          },
+          "fecha": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "en_confeccion",
+              "terminado",
+              "procesado"
+            ],
+            "title": "Estado"
+          },
+          "codigo_transportista": {
+            "type": "integer",
+            "title": "Codigo Transportista"
+          },
+          "cuit_bodega": {
+            "type": "string",
+            "title": "Cuit Bodega"
+          },
+          "renglones": {
+            "items": {
+              "$ref": "#/components/schemas/RenglonMovimientoOut"
+            },
+            "type": "array",
+            "title": "Renglones"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codigo",
+          "fecha",
+          "estado",
+          "codigo_transportista",
+          "cuit_bodega",
+          "renglones"
+        ],
+        "title": "IngresoOut"
+      },
+      "MaridajeOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "temperatura_servicio": {
+            "type": "integer",
+            "title": "Temperatura Servicio"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "nombre",
+          "temperatura_servicio"
+        ],
+        "title": "MaridajeOut"
+      },
+      "PermisoIn": {
+        "properties": {
+          "fecha_emision": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha Emision"
+          },
+          "fecha_vencimiento": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha Vencimiento"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "fecha_emision",
+          "fecha_vencimiento"
+        ],
+        "title": "PermisoIn"
+      },
+      "PermisoOut": {
+        "properties": {
+          "codigo": {
+            "type": "integer",
+            "title": "Codigo"
+          },
+          "fecha_emision": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha Emision"
+          },
+          "fecha_vencimiento": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha Vencimiento"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codigo",
+          "fecha_emision",
+          "fecha_vencimiento"
+        ],
+        "title": "PermisoOut"
+      },
+      "RenglonComprobanteIn": {
+        "properties": {
+          "codigo_vino": {
+            "type": "integer",
+            "title": "Codigo Vino"
+          },
+          "cantidad": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Cantidad"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "codigo_vino",
+          "cantidad"
+        ],
+        "title": "RenglonComprobanteIn"
+      },
+      "RenglonComprobanteOut": {
+        "properties": {
+          "codigo_vino": {
+            "type": "integer",
+            "title": "Codigo Vino"
+          },
+          "nombre_vino": {
+            "type": "string",
+            "title": "Nombre Vino"
+          },
+          "cantidad": {
+            "type": "integer",
+            "title": "Cantidad"
+          },
+          "precio_unitario": {
+            "type": "string",
+            "title": "Precio Unitario"
+          },
+          "subtotal_renglon": {
+            "type": "string",
+            "title": "Subtotal Renglon"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codigo_vino",
+          "nombre_vino",
+          "cantidad",
+          "precio_unitario",
+          "subtotal_renglon"
+        ],
+        "title": "RenglonComprobanteOut"
+      },
+      "RenglonMovimientoIn": {
+        "properties": {
+          "codigo_vino": {
+            "type": "integer",
+            "title": "Codigo Vino"
+          },
+          "cantidad": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Cantidad"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "codigo_vino",
+          "cantidad"
+        ],
+        "title": "RenglonMovimientoIn"
+      },
+      "RenglonMovimientoOut": {
+        "properties": {
+          "codigo_vino": {
+            "type": "integer",
+            "title": "Codigo Vino"
+          },
+          "nombre_vino": {
+            "type": "string",
+            "title": "Nombre Vino"
+          },
+          "cantidad": {
+            "type": "integer",
+            "title": "Cantidad"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codigo_vino",
+          "nombre_vino",
+          "cantidad"
+        ],
+        "title": "RenglonMovimientoOut"
+      },
+      "SalaOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "calle": {
+            "type": "string",
+            "title": "Calle"
+          },
+          "numero": {
+            "type": "string",
+            "title": "Numero"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "calle",
+          "numero"
+        ],
+        "title": "SalaOut"
+      },
+      "SaludOut": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "base_de_datos": {
+            "type": "string",
+            "title": "Base De Datos"
+          },
+          "current_user": {
+            "type": "string",
+            "title": "Current User"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "base_de_datos",
+          "current_user"
+        ],
+        "title": "SaludOut"
+      },
+      "TopVinoOut": {
+        "properties": {
+          "codigo_vino": {
+            "type": "integer",
+            "title": "Codigo Vino"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "botellas_vendidas": {
+            "type": "integer",
+            "title": "Botellas Vendidas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codigo_vino",
+          "nombre",
+          "botellas_vendidas"
+        ],
+        "title": "TopVinoOut"
+      },
+      "TransferenciaCreate": {
+        "properties": {
+          "id_sala_venta": {
+            "type": "integer",
+            "title": "Id Sala Venta"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id_sala_venta"
+        ],
+        "title": "TransferenciaCreate"
+      },
+      "TransferenciaOut": {
+        "properties": {
+          "numero": {
+            "type": "integer",
+            "title": "Numero"
+          },
+          "fecha_confeccion": {
+            "type": "string",
+            "format": "date",
+            "title": "Fecha Confeccion"
+          },
+          "estado": {
+            "type": "string",
+            "enum": [
+              "en_confeccion",
+              "terminado",
+              "procesado"
+            ],
+            "title": "Estado"
+          },
+          "id_sala_venta": {
+            "type": "integer",
+            "title": "Id Sala Venta"
+          },
+          "renglones": {
+            "items": {
+              "$ref": "#/components/schemas/RenglonMovimientoOut"
+            },
+            "type": "array",
+            "title": "Renglones"
+          }
+        },
+        "type": "object",
+        "required": [
+          "numero",
+          "fecha_confeccion",
+          "estado",
+          "id_sala_venta",
+          "renglones"
+        ],
+        "title": "TransferenciaOut"
+      },
+      "TransportistaActivoOut": {
+        "properties": {
+          "codigo": {
+            "type": "integer",
+            "title": "Codigo"
+          },
+          "razon_social": {
+            "type": "string",
+            "title": "Razon Social"
+          },
+          "ingresos": {
+            "type": "integer",
+            "title": "Ingresos"
+          },
+          "botellas": {
+            "type": "integer",
+            "title": "Botellas"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codigo",
+          "razon_social",
+          "ingresos",
+          "botellas"
+        ],
+        "title": "TransportistaActivoOut"
+      },
+      "TrazabilidadOut": {
+        "properties": {
+          "codigo": {
+            "type": "integer",
+            "title": "Codigo"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "bodega": {
+            "type": "string",
+            "title": "Bodega"
+          },
+          "cepas": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cepas"
+          },
+          "maridajes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maridajes"
+          },
+          "stock_total": {
+            "type": "integer",
+            "title": "Stock Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codigo",
+          "nombre",
+          "bodega",
+          "cepas",
+          "maridajes",
+          "stock_total"
+        ],
+        "title": "TrazabilidadOut"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VentaSalaOut": {
+        "properties": {
+          "id_sala": {
+            "type": "integer",
+            "title": "Id Sala"
+          },
+          "calle": {
+            "type": "string",
+            "title": "Calle"
+          },
+          "numero": {
+            "type": "string",
+            "title": "Numero"
+          },
+          "monto_total": {
+            "type": "string",
+            "title": "Monto Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id_sala",
+          "calle",
+          "numero",
+          "monto_total"
+        ],
+        "title": "VentaSalaOut"
+      },
+      "VinoCreate": {
+        "properties": {
+          "nombre": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Nombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "tinto",
+              "blanco",
+              "rosado",
+              "espumante"
+            ],
+            "title": "Tipo"
+          },
+          "anada": {
+            "type": "integer",
+            "title": "Anada"
+          },
+          "volumen_ml": {
+            "type": "integer",
+            "title": "Volumen Ml"
+          },
+          "graduacion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Graduacion"
+          },
+          "precio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Precio"
+          },
+          "cuit_bodega": {
+            "type": "string",
+            "maxLength": 11,
+            "minLength": 11,
+            "title": "Cuit Bodega"
+          },
+          "cepas": {
+            "items": {
+              "$ref": "#/components/schemas/ComposicionIn"
+            },
+            "type": "array",
+            "title": "Cepas"
+          },
+          "maridajes": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Maridajes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "nombre",
+          "tipo",
+          "anada",
+          "volumen_ml",
+          "graduacion",
+          "precio",
+          "cuit_bodega"
+        ],
+        "title": "VinoCreate"
+      },
+      "VinoDetalleOut": {
+        "properties": {
+          "codigo": {
+            "type": "integer",
+            "title": "Codigo"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "tinto",
+              "blanco",
+              "rosado",
+              "espumante"
+            ],
+            "title": "Tipo"
+          },
+          "anada": {
+            "type": "integer",
+            "title": "Anada"
+          },
+          "volumen_ml": {
+            "type": "integer",
+            "title": "Volumen Ml"
+          },
+          "graduacion": {
+            "type": "string",
+            "title": "Graduacion"
+          },
+          "precio": {
+            "type": "string",
+            "title": "Precio"
+          },
+          "cuit_bodega": {
+            "type": "string",
+            "title": "Cuit Bodega"
+          },
+          "bodega": {
+            "$ref": "#/components/schemas/BodegaOut"
+          },
+          "cepas": {
+            "items": {
+              "$ref": "#/components/schemas/CepaOut"
+            },
+            "type": "array",
+            "title": "Cepas"
+          },
+          "maridajes": {
+            "items": {
+              "$ref": "#/components/schemas/MaridajeOut"
+            },
+            "type": "array",
+            "title": "Maridajes"
+          },
+          "stock_deposito": {
+            "type": "integer",
+            "title": "Stock Deposito"
+          },
+          "stock_sala": {
+            "type": "integer",
+            "title": "Stock Sala"
+          },
+          "stock_total": {
+            "type": "integer",
+            "title": "Stock Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codigo",
+          "nombre",
+          "tipo",
+          "anada",
+          "volumen_ml",
+          "graduacion",
+          "precio",
+          "cuit_bodega",
+          "bodega",
+          "cepas",
+          "maridajes",
+          "stock_deposito",
+          "stock_sala",
+          "stock_total"
+        ],
+        "title": "VinoDetalleOut"
+      },
+      "VinoListaOut": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VinoOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "VinoListaOut"
+      },
+      "VinoOut": {
+        "properties": {
+          "codigo": {
+            "type": "integer",
+            "title": "Codigo"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "tinto",
+              "blanco",
+              "rosado",
+              "espumante"
+            ],
+            "title": "Tipo"
+          },
+          "anada": {
+            "type": "integer",
+            "title": "Anada"
+          },
+          "volumen_ml": {
+            "type": "integer",
+            "title": "Volumen Ml"
+          },
+          "graduacion": {
+            "type": "string",
+            "title": "Graduacion"
+          },
+          "precio": {
+            "type": "string",
+            "title": "Precio"
+          },
+          "cuit_bodega": {
+            "type": "string",
+            "title": "Cuit Bodega"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codigo",
+          "nombre",
+          "tipo",
+          "anada",
+          "volumen_ml",
+          "graduacion",
+          "precio",
+          "cuit_bodega"
+        ],
+        "title": "VinoOut"
+      },
+      "VinoSinStockOut": {
+        "properties": {
+          "codigo": {
+            "type": "integer",
+            "title": "Codigo"
+          },
+          "nombre": {
+            "type": "string",
+            "title": "Nombre"
+          },
+          "stock_deposito": {
+            "type": "integer",
+            "title": "Stock Deposito"
+          }
+        },
+        "type": "object",
+        "required": [
+          "codigo",
+          "nombre",
+          "stock_deposito"
+        ],
+        "title": "VinoSinStockOut"
+      },
+      "VinoUpdate": {
+        "properties": {
+          "nombre": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nombre"
+          },
+          "tipo": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "tinto",
+                  "blanco",
+                  "rosado",
+                  "espumante"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tipo"
+          },
+          "anada": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anada"
+          },
+          "volumen_ml": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Volumen Ml"
+          },
+          "graduacion": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Graduacion"
+          },
+          "precio": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Precio"
+          },
+          "cuit_bodega": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 11,
+                "minLength": 11
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cuit Bodega"
+          },
+          "cepas": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/ComposicionIn"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cepas"
+          },
+          "maridajes": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maridajes"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VinoUpdate"
+      }
+    }
+  }
+}
