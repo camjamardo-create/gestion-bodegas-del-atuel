@@ -48,6 +48,9 @@ excluido por `.gitignore`.
 | `DB_NAME` | Nombre de la base | `bodegas_del_atuel` |
 | `DB_USER` | Rol de conexión de la API | `rol_api` |
 | `DB_PASSWORD` | Clave de `rol_api` para ejecución local | Obligatoria |
+| `DB_SSLMODE` | Modo SSL de PostgreSQL (`disable` local, `require`/`verify-full` en nube) | `require` |
+| `CORS_ORIGINS` | Orígenes permitidos del front, separados por coma | `http://localhost:8080` |
+| `PORT` | Puerto interno del contenedor de la API | `8000` |
 | `DB_POOL_MIN_SIZE` | Conexiones mínimas del pool | `1` |
 | `DB_POOL_MAX_SIZE` | Conexiones máximas del pool | `10` |
 | `DB_POOL_TIMEOUT` | Segundos de espera por conexión | `10` |
@@ -89,8 +92,9 @@ En un volumen nuevo, PostgreSQL ejecuta automáticamente:
 
 1. `db/initdb/01_migraciones.sql`: aplica `001` a `008`.
 2. `db/initdb/02_seed_minimo.sql`: carga un catálogo mínimo para operar y probar.
-3. `db/initdb/99_password_api.sql`: reemplaza la clave de ejemplo de `rol_api`
-   por `APP_DB_PASSWORD`.
+3. `db/initdb/99_password_api.sql`: fija las claves de `rol_api` y
+   `rol_reporte` desde `APP_DB_PASSWORD` y `APP_REPORT_PASSWORD`. No hay claves
+   literales en las migraciones.
 
 > Los scripts de `/docker-entrypoint-initdb.d` solo se ejecutan si el volumen de
 > datos está vacío. Si el volumen ya existía antes de esta etapa, los scripts no
@@ -296,7 +300,9 @@ También está disponible en ejecución en `/openapi.json` y `/docs`.
 - `terminar` actualiza el estado directamente; el trigger de transición es el
   que decide si el cambio es válido. `procesar` siempre pasa por los
   procedimientos de la base.
-- La clave hardcodeada de `rol_api` en `007_roles.sql` queda reemplazada en
-  Docker por `APP_DB_PASSWORD`. No se versiona ningún `.env`.
-- No se modificaron `db/migrations/` ni `db/seed/` en esta etapa. Los scripts de
-  inicialización nuevos están en `db/initdb/`.
+- En la Etapa 8 se quitaron las claves literales de `db/migrations/007_roles.sql`.
+  Las claves de `rol_api` y `rol_reporte` se fijan por entorno
+  (`APP_DB_PASSWORD` y `APP_REPORT_PASSWORD`); no se versiona ningún `.env`.
+- La configuración de despliegue, TLS, CORS y backups está documentada en
+  [`docs/informe/08_despliegue.md`](../docs/informe/08_despliegue.md) y en el
+  [`checklist manual`](../docs/despliegue/CHECKLIST_MANUAL.md).

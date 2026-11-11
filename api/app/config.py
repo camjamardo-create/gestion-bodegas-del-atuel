@@ -16,6 +16,14 @@ from psycopg.conninfo import make_conninfo
 # con el propietario de la base ni con un superusuario.
 ROL_API_ESPERADO = "rol_api"
 ROLES_PROHIBIDOS = {"postgres", "supabase_admin", "azure_pg_admin", "rdsadmin"}
+SSLMODES_VALIDOS = {
+    "disable",
+    "allow",
+    "prefer",
+    "require",
+    "verify-ca",
+    "verify-full",
+}
 
 
 def _entero(nombre: str, defecto: int) -> int:
@@ -35,6 +43,23 @@ def _texto(nombre: str, defecto: str | None = None) -> str:
     return valor
 
 
+def _sslmode() -> str:
+    valor = os.getenv("DB_SSLMODE", "require").strip().lower()
+    if valor not in SSLMODES_VALIDOS:
+        opciones = ", ".join(sorted(SSLMODES_VALIDOS))
+        raise RuntimeError(f"DB_SSLMODE debe ser uno de: {opciones}")
+    return valor
+
+
+def cors_origins_desde_entorno() -> tuple[str, ...]:
+    """Origenes permitidos para el front, separados por coma.
+
+    No depende de DB_PASSWORD para poder importar la app al exportar OpenAPI.
+    """
+    valor = os.getenv("CORS_ORIGINS", "http://localhost:8080")
+    return tuple(origen.strip() for origen in valor.split(",") if origen.strip())
+
+
 @dataclass(frozen=True)
 class Settings:
     db_host: str
@@ -42,6 +67,7 @@ class Settings:
     db_name: str
     db_user: str
     db_password: str
+    db_sslmode: str
     pool_min_size: int
     pool_max_size: int
     pool_timeout: float
@@ -60,6 +86,7 @@ class Settings:
             db_name=os.getenv("DB_NAME", "bodegas_del_atuel"),
             db_user=db_user,
             db_password=_texto("DB_PASSWORD"),
+            db_sslmode=_sslmode(),
             pool_min_size=_entero("DB_POOL_MIN_SIZE", 1),
             pool_max_size=_entero("DB_POOL_MAX_SIZE", 10),
             pool_timeout=float(os.getenv("DB_POOL_TIMEOUT", "10")),
@@ -73,12 +100,16 @@ class Settings:
             dbname=self.db_name,
             user=self.db_user,
             password=self.db_password,
+            sslmode=self.db_sslmode,
             connect_timeout=int(self.pool_timeout),
         )
 
     @property
     def dsn_sin_password(self) -> str:
-        return f"postgresql://{self.db_user}@{self.db_host}:{self.db_port}/{self.db_name}"
+        return (
+            f"postgresql://{self.db_user}@{self.db_host}:{self.db_port}/"
+            f"{self.db_name}?sslmode={self.db_sslmode}"
+        )
 
 
 @lru_cache(maxsize=1)

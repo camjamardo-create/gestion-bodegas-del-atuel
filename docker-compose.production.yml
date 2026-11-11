@@ -1,0 +1,121 @@
+# Despliegue de referencia para un servidor unico con Docker.
+# La base y la API NO publican puertos al host. Solo Caddy publica 80/443.
+#
+# Uso:
+#   docker compose --env-file .env.production -f docker-compose.production.yml up -d --build
+#
+# Requiere DNS del dominio apuntando al servidor y los puertos 80/443 abiertos.
+# Para un entorno sin dominio, usar docker-compose.yml (solo local).
+
+services:
+  postgres:
+    build:
+      context: ./deploy/postgres
+    container_name: bodegas_del_atuel_db
+    # TLS interno obligatorio: la API usa DB_SSLMODE=require.
+    command:
+      - postgres
+      - -c
+      - ssl=on
+      - -c
+      - ssl_cert_file=/var/lib/postgresql/ssl/server.crt
+      - -c
+      - ssl_key_file=/var/lib/postgresql/ssl/server.key
+      - -c
+      - ssl_min_protocol_version=TLSv1.2
+      - -c
+      - hba_file=/etc/postgresql/pg_hba.conf
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bodegas_del_atuel}
+      POSTGRES_USER: ${POSTGRES_USER:-bodegas_owner}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definir POSTGRES_PASSWORD}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?Definir APP_DB_PASSWORD}
+      APP_REPORT_PASSWORD: ${APP_REPORT_PASSWORD:?Definir APP_REPORT_PASSWORD}
+    volumes:
+      - bodegas_pgdata:/var/lib/postgresql
+      - ./db/migrations:/migrations:ro
+      - ./db/initdb:/docker-entrypoint-initdb.d:ro
+      - ./deploy/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    networks:
+      - interna
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bodegas_owner} -d ${POSTGRES_DB:-bodegas_del_atuel}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    shm_size: 256mb
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  api:
+    build:
+      context: ./api
+    container_name: bodegas_del_atuel_api
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: ${POSTGRES_DB:-bodegas_del_atuel}
+      DB_USER: rol_api
+      DB_PASSWORD: ${APP_DB_PASSWORD:?Definir APP_DB_PASSWORD}
+      DB_SSLMODE: ${DB_SSLMODE:-require}
+      CORS_ORIGINS: ${CORS_ORIGINS:?Definir CORS_ORIGINS con el origen HTTPS del front}
+      DB_POOL_MIN_SIZE: ${DB_POOL_MIN_SIZE:-1}
+      DB_POOL_MAX_SIZE: ${DB_POOL_MAX_SIZE:-10}
+      DB_POOL_TIMEOUT: ${DB_POOL_TIMEOUT:-10}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - interna
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  front:
+    build:
+      context: ./front
+    container_name: bodegas_del_atuel_front
+    environment:
+      # Caddy enruta /api/* a la API; el front usa el mismo origen.
+      API_BASE_URL: /api
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - interna
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+  caddy:
+    image: caddy:2.9-alpine
+    container_name: bodegas_del_atuel_proxy
+    environment:
+      DOMAIN: ${DOMAIN:?Definir DOMAIN (ej. app.example.com)}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      front:
+        condition: service_started
+      api:
+        condition: service_healthy
+    networks:
+      - interna
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+
+networks:
+  interna:
+    driver: bridge
+
+volumes:
+  bodegas_pgdata:
+  caddy_data:
+  caddy_config:

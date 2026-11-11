@@ -2,12 +2,17 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, field
 from typing import Any, Iterator
 
 import pytest
 from fastapi.testclient import TestClient
 from psycopg.rows import dict_row
+
+# La API exige SSL por defecto (DB_SSLMODE=require) para despliegues en nube.
+# Las pruebas locales usan el PostgreSQL de Compose, que no publica TLS.
+os.environ.setdefault("DB_SSLMODE", "disable")
 
 from app import db
 from app.main import app

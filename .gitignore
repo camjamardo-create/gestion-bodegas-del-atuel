@@ -1,14 +1,22 @@
-# Entorno local
+# Entorno local y de despliegue
 .env
+.env.production
+.env.local
+.env.*.local
+front/.env
 .venv/
 venv/
 __pycache__/
 *.pyc
 
-# Dumps de la carga masiva
+# Dumps, backups y restauraciones locales
 db/seed/dump_completo.sql.gz
 db/seed/dump_completo.sql
 db/seed/restore_test/
+backups/
+*.dump
+*.backup
+*.sql.gz
 
 # Salidas temporales
 db/seed/.benchmark/

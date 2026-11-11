@@ -1,0 +1,24 @@
+# Caddy delante de front y API. Obtiene HTTPS automaticamente si DOMAIN es un
+# nombre publico con DNS apuntando al servidor. Para localhost usa su CA interna.
+{$DOMAIN:localhost} {
+    encode gzip
+
+    # /api se elimina antes de llegar a FastAPI: /api/vinos -> /vinos.
+    handle_path /api/* {
+        reverse_proxy api:8000
+    }
+
+    handle /api {
+        redir /api /api/ 308
+    }
+
+    handle {
+        reverse_proxy front:8080
+    }
+
+    header {
+        -Server
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+}

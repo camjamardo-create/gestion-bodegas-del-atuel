@@ -4,3 +4,5 @@ __pycache__/
 .venv/
 tests/
 .env
+.env.*
+requirements-dev.txt

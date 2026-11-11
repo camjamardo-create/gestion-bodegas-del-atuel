@@ -10,14 +10,18 @@ BEGIN;
 --- ===============================================================================
 
 -- 1. CREAR LOS ROLES
+-- Los roles se crean sin clave. La clave se fija fuera de la migracion, desde
+-- APP_DB_PASSWORD y APP_REPORT_PASSWORD, mediante db/initdb/99_password_api.sql
+-- o scripts/aplicar_migraciones. Asi no hay credenciales en el repositorio ni
+-- en el historial de Git.
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rol_api') THEN 
-        EXECUTE 'CREATE ROLE rol_api LOGIN PASSWORD ''ApiBodegas2026''';
+        EXECUTE 'CREATE ROLE rol_api LOGIN';
     END IF;
 
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'rol_reporte') THEN
-        EXECUTE 'CREATE ROLE rol_reporte LOGIN PASSWORD ''ReporteBodegas2026''';
+        EXECUTE 'CREATE ROLE rol_reporte LOGIN';
     END IF;
 END
 $$;
@@ -30,7 +34,11 @@ $$;
  REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
  REVOKE ALL ON ALL PROCEDURES IN SCHEMA public FROM PUBLIC;
 
- REVOKE CONNECT ON DATABASE bodegas_del_atuel FROM PUBLIC;
+ DO $$
+ BEGIN
+     EXECUTE format('REVOKE CONNECT ON DATABASE %I FROM PUBLIC', current_database());
+ END
+ $$;
 
  --- ===============================================================================
  -- 3. ACCESO BASICO AL ESQUEMA
@@ -78,7 +86,11 @@ TO rol_api;
 --- ===============================================================================
 --6. PERMISO DE CONEXION PARA LOS DOS ROLES
 
-GRANT CONNECT ON DATABASE bodegas_del_atuel TO rol_api, rol_reporte;
+DO $$
+BEGIN
+    EXECUTE format('GRANT CONNECT ON DATABASE %I TO rol_api, rol_reporte', current_database());
+END
+$$;
 
 --- ===============================================================================
 -- 7. PERMISOS POR DEFECTO PARA OBJETOS FUTUROS
