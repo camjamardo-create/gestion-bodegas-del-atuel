@@ -106,33 +106,35 @@ reglas.
 
 ---
 
-## Slide 7 — Triggers: la venta se calcula sola
+## Slide 7 — Funciones: lógica reutilizable
 
 ```sql
-CREATE TRIGGER trg_renglon_comprobante_actualiza_venta
-AFTER INSERT ON renglon_comprobante
-FOR EACH ROW
-EXECUTE FUNCTION trg_actualizar_stock_y_totales_venta();
-
--- dentro de la función
-UPDATE stock_sala
-   SET cantidad = cantidad - NEW.cantidad
- WHERE id_sala = v_id_sala
-   AND codigo_vino = NEW.codigo_vino;
-
-UPDATE comprobante
-   SET subtotal = v_subtotal,
-       descuento_total = v_descuento_total,
-       total = v_total
- WHERE numero = NEW.numero_comprobante;
+CREATE OR REPLACE FUNCTION fn_descuento_cliente(p_id_cliente INT)
+RETURNS NUMERIC
+LANGUAGE sql STABLE
+AS $$
+    SELECT COALESCE(
+        (SELECT CASE c.tipo
+                   WHEN 'cliente_comun' THEN 0.00
+                   WHEN 'socio_club' THEN 0.10
+                   WHEN 'distribuidor' THEN 0.20
+                   WHEN 'exportador' THEN COALESCE(e.descuento_especial, 0.30)
+                END
+            FROM cliente c
+            LEFT JOIN exportador e ON e.id_cliente = c.id
+            WHERE c.id = p_id_cliente), 0.00);
+$$;
 ```
 
-Evidencia: RN-08 y RN-09.
+También: `fn_total_comprobante`, `fn_stock_sala`, `fn_transicion_valida`.
 
-**Notas:** La API inserta la cabecera y el renglón, pero no manda totales. El
-trigger descuenta stock y recalcula subtotal, descuento y total en la misma
-transacción. Si el stock no alcanza, lanza una excepción y se revierte todo: no
-queda un comprobante a medias.
+Evidencia: RN-06, RN-08, RN-09, RN-10 y RN-11.
+
+**Notas:** Las funciones encapsulan cálculos y validaciones que se usan en varios
+lugares. `fn_descuento_cliente` resuelve el descuento por tipo de cliente;
+`fn_total_comprobante` calcula el total; `fn_stock_sala` devuelve el stock o
+cero; `fn_transicion_valida` controla los estados. Al estar en la base, las usan
+triggers, procedimientos, vistas y los tests.
 
 ---
 
@@ -167,7 +169,37 @@ veces.
 
 ---
 
-## Slide 9 — Vistas: una definición, muchos consumidores
+## Slide 9 — Triggers: la venta se calcula sola
+
+```sql
+CREATE TRIGGER trg_renglon_comprobante_actualiza_venta
+AFTER INSERT ON renglon_comprobante
+FOR EACH ROW
+EXECUTE FUNCTION trg_actualizar_stock_y_totales_venta();
+
+-- dentro de la función
+UPDATE stock_sala
+   SET cantidad = cantidad - NEW.cantidad
+ WHERE id_sala = v_id_sala
+   AND codigo_vino = NEW.codigo_vino;
+
+UPDATE comprobante
+   SET subtotal = v_subtotal,
+       descuento_total = v_descuento_total,
+       total = v_total
+ WHERE numero = NEW.numero_comprobante;
+```
+
+Evidencia: RN-08 y RN-09.
+
+**Notas:** La API inserta la cabecera y el renglón, pero no manda totales. El
+trigger descuenta stock y recalcula subtotal, descuento y total en la misma
+transacción. Si el stock no alcanza, lanza una excepción y se revierte todo: no
+queda un comprobante a medias.
+
+---
+
+## Slide 10 — Vistas: una definición, muchos consumidores
 
 ```sql
 CREATE VIEW vista_stock_total_por_vino AS
@@ -193,20 +225,26 @@ vino y los reportes.
 
 ---
 
-## Slide 10 — Roles: privilegio mínimo
+## Slide 11 — Roles: privilegio mínimo
 
 ```sql
 CREATE ROLE rol_api LOGIN;
 CREATE ROLE rol_reporte LOGIN;
 
-GRANT SELECT, INSERT, UPDATE, DELETE
-   ON <tablas operativas> TO rol_api;
-GRANT SELECT, INSERT
-   ON auditoria_precio TO rol_api;
+-- 4. rol_api: lectura y escritura
+GRANT SELECT, INSERT, UPDATE, DELETE ON
+    bodega, vino, comprobante, stock_sala, ...
+TO rol_api;
+
+GRANT SELECT, INSERT ON auditoria_precio TO rol_api;
 GRANT EXECUTE ON ALL PROCEDURES
-   IN SCHEMA public TO rol_api;
-GRANT SELECT
-   ON vista_stock_total_por_vino, ... TO rol_reporte;
+    IN SCHEMA public TO rol_api;
+
+GRANT SELECT ON
+    vista_stock_total_por_vino,
+    vista_ventas_mensuales_por_sala,
+    vista_documentos_pendientes
+TO rol_reporte;
 ```
 
 **Notas:** La API se conecta como `rol_api`, nunca como propietario ni
@@ -215,7 +253,7 @@ superusuario. `rol_reporte` solo lee vistas. Las claves se fijan por entorno en
 
 ---
 
-## Slide 11 — Índices: menos buffers, no más código
+## Slide 12 — Índices: menos buffers, no más código
 
 | Consulta | Antes | Después | Mejora |
 |---|---:|---:|---:|
@@ -240,7 +278,7 @@ tabla. Eso también se documentó.
 
 ---
 
-## Slide 12 — Demo en vivo
+## Slide 13 — Demo en vivo
 
 1. Venta exitosa: totales y stock calculados por la base.
 2. Venta sin stock: HTTP `409`, stock intacto, sin comprobante.
@@ -253,7 +291,7 @@ stock, y el plan de ejecución.
 
 ---
 
-## Slide 13 — Gracias
+## Slide 14 — Gracias
 
 - Modelo normalizado y trazable.
 - Reglas ejecutadas por la base, no por la aplicación.
@@ -262,5 +300,5 @@ stock, y el plan de ejecución.
 **Gracias** (vertical, a la derecha).
 
 **Notas:** Cierre: el TPI demuestra que la base no es un depósito de datos, es
-el motor de reglas del sistema. Quedamos para preguntas sobre cualquier parte
-del trabajo.
+el motor de reglas del sistema. Quedamos disponibles para cualquier consulta
+sobre el trabajo.

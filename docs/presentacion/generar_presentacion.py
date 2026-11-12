@@ -581,13 +581,98 @@ footer(s, 6, "db/migrations/002_constraints.sql · tests/db_tests.sql")
 notes(s, "Los constraints son la última línea de defensa. Aunque la API o el front validen, la base rechaza precio negativo, vinos duplicados y stock negativo. Cualquier cliente que se conecte, incluso psql, cumple las mismas reglas.")
 
 # ---------------------------------------------------------------------------
-# 7. Triggers
+# 7. Funciones
+# ---------------------------------------------------------------------------
+s = prs.slides.add_slide(blank)
+set_bg(s, BG)
+header(s, "Funciones", "Lógica reutilizable en la base")
+
+code_box(s, 0.75, 1.62, 7.55, 2.95, """
+CREATE OR REPLACE FUNCTION fn_descuento_cliente(p_id_cliente INT)
+RETURNS NUMERIC
+LANGUAGE sql STABLE
+AS $$
+    SELECT COALESCE(
+        (SELECT CASE c.tipo
+                   WHEN 'cliente_comun' THEN 0.00
+                   WHEN 'socio_club' THEN 0.10
+                   WHEN 'distribuidor' THEN 0.20
+                   WHEN 'exportador' THEN COALESCE(e.descuento_especial, 0.30)
+                END
+            FROM cliente c
+            LEFT JOIN exportador e ON e.id_cliente = c.id
+            WHERE c.id = p_id_cliente), 0.00);
+$$;
+""", 10.2, "003_funciones.sql")
+
+bullets(s, 8.6, 1.62, 4.0, 4.2, [
+    "**fn_descuento_cliente:** 0 %, 10 %, 20 % o 30 % según el tipo (RN-06).",
+    "**fn_total_comprobante:** subtotal menos descuento (RN-08).",
+    "**fn_stock_sala:** stock disponible o 0 (RN-09).",
+    "**fn_transicion_valida:** estados válidos (RN-10 y RN-11).",
+    "**Las usan triggers, procedimientos, vistas y tests.**",
+], 12.5, BODY, 8)
+
+callout = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.75), Inches(4.75), Inches(11.85), Inches(0.5))
+callout.fill.solid()
+callout.fill.fore_color.rgb = CREAM
+callout.line.fill.background()
+textbox(s, 1.0, 4.85, 11.2, 0.3, "Se define una vez y se reutiliza: la lógica de negocio no se copia en la API ni en cada consulta.", 12, DARK, True)
+
+footer(s, 7, "db/migrations/003_funciones.sql · fn_descuento_cliente, fn_stock_sala, fn_transicion_valida")
+notes(s, "Las funciones encapsulan cálculos y validaciones que se usan en varios lugares. fn_descuento_cliente resuelve el descuento por tipo de cliente; fn_total_comprobante calcula el total; fn_stock_sala devuelve el stock o cero; fn_transicion_valida controla los estados. Al estar en la base, las usan triggers, procedimientos, vistas y los tests.")
+
+# ---------------------------------------------------------------------------
+# 8. Procedimientos
+# ---------------------------------------------------------------------------
+s = prs.slides.add_slide(blank)
+set_bg(s, BG)
+header(s, "Procedimientos", "Una sola puerta de entrada")
+
+code_box(s, 0.75, 1.62, 7.55, 3.55, """
+CREATE PROCEDURE p_procesar_ingreso(p_codigo INT)
+...
+SELECT estado FROM ingreso
+ WHERE codigo = p_codigo
+ FOR UPDATE;
+
+IF v_estado <> 'terminado' THEN
+  RAISE EXCEPTION 'El ingreso % no esta terminado';
+END IF;
+
+INSERT INTO stock_deposito (codigo_vino, cantidad)
+SELECT codigo_vino, cantidad
+  FROM renglon_ingreso
+ WHERE codigo_ingreso = p_codigo
+ON CONFLICT (codigo_vino) DO UPDATE
+  SET cantidad = stock_deposito.cantidad
+               + EXCLUDED.cantidad;
+""", 11, "004_procedimientos.sql")
+bullets(s, 8.6, 1.62, 4.0, 4.5, [
+    "**FOR UPDATE:** bloquea la cabecera.",
+    "**Valida estado:** solo ingreso terminado.",
+    "**Exige renglones:** no procesa un documento vacío.",
+    "**Suma stock con ON CONFLICT.**",
+    "**Estado final:** procesado.",
+], 12.8, BODY, 8)
+
+callout = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.75), Inches(5.45), Inches(11.85), Inches(0.5))
+callout.fill.solid()
+callout.fill.fore_color.rgb = CREAM
+callout.line.fill.background()
+textbox(s, 1.0, 5.55, 11.2, 0.3, "La API solo hace CALL. Evidencia: RN-10 (ingreso) y RN-11 (transferencia).", 12, DARK, True)
+
+footer(s, 8, "db/migrations/004_procedimientos.sql · p_procesar_ingreso / p_procesar_transferencia")
+notes(s, "El procedimiento bloquea la cabecera con FOR UPDATE, valida el estado, verifica que haya renglones y actualiza el depósito. La API solo hace CALL. Así dos sesiones no procesan el mismo ingreso y el stock no se suma dos veces.")
+
+# ---------------------------------------------------------------------------
+# 9. Triggers
 # ---------------------------------------------------------------------------
 s = prs.slides.add_slide(blank)
 set_bg(s, BG)
 header(s, "Triggers", "La venta se calcula sola")
 
-bullets(s, 0.8, 1.55, 4.3, 4.2, [
+bullets(s, 0.8, 1.62, 4.3, 4.2, [
     "**BEFORE valida; AFTER actualiza.**",
     "**AFTER INSERT** sobre cada renglón.",
     "**Misma transacción:** stock y totales.",
@@ -620,54 +705,11 @@ callout.fill.fore_color.rgb = CREAM
 callout.line.fill.background()
 textbox(s, 1.0, 5.35, 11.2, 0.3, "Evidencia: RN-08 calcula totales · RN-09 rechaza la sobreventa y deja el stock intacto.", 12, DARK, True)
 
-footer(s, 7, "db/migrations/005_triggers.sql · líneas 72–152")
+footer(s, 9, "db/migrations/005_triggers.sql · líneas 72–152")
 notes(s, "La API inserta la cabecera y el renglón, pero no manda totales. El trigger descuenta stock y recalcula subtotal, descuento y total en la misma transacción. Si el stock no alcanza, lanza una excepción y se revierte todo: no queda un comprobante a medias.")
 
 # ---------------------------------------------------------------------------
-# 8. Procedimientos
-# ---------------------------------------------------------------------------
-s = prs.slides.add_slide(blank)
-set_bg(s, BG)
-header(s, "Procedimientos", "Una sola puerta de entrada")
-
-code_box(s, 0.75, 1.62, 7.55, 3.55, """
-CREATE PROCEDURE p_procesar_ingreso(p_codigo INT)
-...
-SELECT estado FROM ingreso
- WHERE codigo = p_codigo
- FOR UPDATE;
-
-IF v_estado <> 'terminado' THEN
-  RAISE EXCEPTION 'El ingreso % no esta terminado';
-END IF;
-
-INSERT INTO stock_deposito (codigo_vino, cantidad)
-SELECT codigo_vino, cantidad
-  FROM renglon_ingreso
- WHERE codigo_ingreso = p_codigo
-ON CONFLICT (codigo_vino) DO UPDATE
-  SET cantidad = stock_deposito.cantidad
-               + EXCLUDED.cantidad;
-""", 11, "004_procedimientos.sql")
-bullets(s, 8.6, 1.55, 4.0, 4.5, [
-    "**FOR UPDATE:** bloquea la cabecera.",
-    "**Valida estado:** solo ingreso terminado.",
-    "**Exige renglones:** no procesa un documento vacío.",
-    "**Suma stock con ON CONFLICT.**",
-    "**Estado final:** procesado.",
-], 12.8, BODY, 8)
-
-callout = s.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.75), Inches(5.45), Inches(11.85), Inches(0.5))
-callout.fill.solid()
-callout.fill.fore_color.rgb = CREAM
-callout.line.fill.background()
-textbox(s, 1.0, 5.55, 11.2, 0.3, "La API solo hace CALL. Evidencia: RN-10 (ingreso) y RN-11 (transferencia).", 12, DARK, True)
-
-footer(s, 8, "db/migrations/004_procedimientos.sql · p_procesar_ingreso / p_procesar_transferencia")
-notes(s, "El procedimiento bloquea la cabecera con FOR UPDATE, valida el estado, verifica que haya renglones y actualiza el depósito. La API solo hace CALL. Así dos sesiones no procesan el mismo ingreso y el stock no se suma dos veces.")
-
-# ---------------------------------------------------------------------------
-# 9. Vistas
+# 10. Vistas
 # ---------------------------------------------------------------------------
 s = prs.slides.add_slide(blank)
 set_bg(s, BG)
@@ -703,11 +745,11 @@ callout.fill.fore_color.rgb = CREAM
 callout.line.fill.background()
 textbox(s, 1.0, 5.15, 11.2, 0.3, "No es una tabla: se recalcula con los datos actuales y evita duplicar la lógica en cada consulta.", 12, DARK, True)
 
-footer(s, 9, "db/migrations/006_vistas.sql · vista_stock_total_por_vino")
+footer(s, 10, "db/migrations/006_vistas.sql · vista_stock_total_por_vino")
 notes(s, "La vista encapsula el join y la suma de stock. El consumidor pide stock_total y no repite la lógica. El LEFT JOIN es importante: un vino sin stock en depósito o en salas sigue apareciendo con cero. La usan la ficha del vino y los reportes.")
 
 # ---------------------------------------------------------------------------
-# 10. Roles
+# 11. Roles
 # ---------------------------------------------------------------------------
 s = prs.slides.add_slide(blank)
 set_bg(s, BG)
@@ -743,11 +785,11 @@ callout.fill.fore_color.rgb = CREAM
 callout.line.fill.background()
 textbox(s, 1.0, 5.75, 11.2, 0.3, "La API nunca se conecta como owner. /salud devuelve current_user = rol_api.", 12, DARK, True)
 
-footer(s, 10, "db/migrations/007_roles.sql · db/initdb/99_password_api.sql")
+footer(s, 11, "db/migrations/007_roles.sql · db/initdb/99_password_api.sql")
 notes(s, "La API se conecta como rol_api, nunca como propietario ni superusuario. rol_reporte solo lee vistas. Las claves se fijan por entorno en db/initdb/99_password_api.sql: no hay credenciales literales en el repositorio.")
 
 # ---------------------------------------------------------------------------
-# 11. Índices
+# 12. Índices
 # ---------------------------------------------------------------------------
 s = prs.slides.add_slide(blank)
 set_bg(s, BG)
@@ -777,11 +819,11 @@ callout.fill.fore_color.rgb = CREAM
 callout.line.fill.background()
 textbox(s, 1.0, 5.02, 11.3, 0.7, "No todos los índices ayudan: S1, S11 y S12 siguen con Seq Scan porque leen casi toda la tabla. El índice se justifica con el plan, no con la intuición.", 12.5, DARK, True, font=FONT_TITLE, line_spacing=1.08)
 
-footer(s, 11, "docs/informe_etapa4_indices.md · planes antes/después")
+footer(s, 12, "docs/informe_etapa4_indices.md · planes antes/después")
 notes(s, "El orden de columnas importa: primero la igualdad o el rango, después el resto. INCLUDE permite un Index Only Scan sin visitar el heap. No todos los índices ayudan: S1, S11 y S12 siguen con Seq Scan porque leen casi toda la tabla. Eso también se documentó.")
 
 # ---------------------------------------------------------------------------
-# 12. Demo
+# 13. Demo
 # ---------------------------------------------------------------------------
 s = prs.slides.add_slide(blank)
 set_bg(s, BG)
@@ -829,11 +871,11 @@ textbox(s, 8.6, 4.74, 3.65, 0.45, "Si la red falla: capturas de respaldo.", 10, 
 
 textbox(s, 0.85, 6.15, 11.6, 0.3, "Front  http://localhost:8080     ·     API  http://localhost:8000/docs     ·     Salud  /api/salud", 10.5, MUTED, font=FONT_CODE)
 
-footer(s, 12, "Si el 8080 está ocupado, el front se publica en 8081 con FRONT_PORT.")
+footer(s, 13, "Si el 8080 está ocupado, el front se publica en 8081 con FRONT_PORT.")
 notes(s, "La demo sigue el mismo orden que la presentación. Si la red o la nube fallan, usar las capturas de respaldo. Mostrar siempre el antes y el después del stock, y el plan de ejecución.")
 
 # ---------------------------------------------------------------------------
-# 13. Cierre
+# 14. Cierre
 # ---------------------------------------------------------------------------
 s = prs.slides.add_slide(blank)
 set_bg(s, DARK)
