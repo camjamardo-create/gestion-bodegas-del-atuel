@@ -11,7 +11,6 @@ Formato: teoría → código real → evidencia.
 **La base de datos como motor de reglas**
 
 Bodegas del Atuel · TPI Bases de Datos  
-Etapa 9 · Documentación y defensa  
 Jamardo, Camila (10842) · Sirotiuk, Juliana (10939)
 
 **Notas:** Buenas. Vamos a mostrar cómo modelamos la bodega y cómo PostgreSQL
@@ -254,13 +253,13 @@ stock, y el plan de ejecución.
 
 ---
 
-## Slide 13 — Cierre
+## Slide 13 — Gracias
 
 - Modelo normalizado y trazable.
 - Reglas ejecutadas por la base, no por la aplicación.
 - Rendimiento medido, no supuesto.
 
-**¿Preguntas?**
+**Gracias** (vertical, a la derecha).
 
 **Notas:** Cierre: el TPI demuestra que la base no es un depósito de datos, es
 el motor de reglas del sistema. Quedamos para preguntas sobre cualquier parte

@@ -181,7 +181,7 @@ def footer(slide, number: int, source: str | None = None) -> None:
     line.line.fill.background()
     if source:
         textbox(slide, 0.75, 7.08, 8.4, 0.25, source, 8.5, MUTED, font=FONT_BODY)
-    textbox(slide, 9.25, 7.08, 3.35, 0.25, f"Bodegas del Atuel · Etapa 9 · {number:02d}", 8.5, MUTED, font=FONT_BODY, align=PP_ALIGN.RIGHT)
+    textbox(slide, 9.25, 7.08, 3.35, 0.25, f"Bodegas del Atuel · {number:02d}", 8.5, MUTED, font=FONT_BODY, align=PP_ALIGN.RIGHT)
 
 
 def code_label(slide, x: float, y: float, text: str, color: RGBColor = GOLD) -> None:
@@ -354,7 +354,7 @@ circle.line.color.rgb = GOLD
 circle.line.width = Pt(2)
 textbox(s, 9.72, 2.35, 2.95, 0.9, "BA", 56, GOLD_LIGHT, True, font=FONT_TITLE, align=PP_ALIGN.CENTER)
 
-textbox(s, 0.8, 0.55, 7.8, 0.3, "TPI BASES DE DATOS · UTN FR SAN RAFAEL", 10.5, GOLD_LIGHT, True)
+textbox(s, 0.8, 0.55, 7.8, 0.3, "TPI BASES DE DATOS · UTN SAN RAFAEL", 10.5, GOLD_LIGHT, True)
 textbox(s, 0.8, 1.35, 7.7, 2.0, "La base de datos\ncomo motor de reglas", 40, WHITE, True, font=FONT_TITLE, line_spacing=0.95)
 textbox(s, 0.8, 3.5, 7.7, 0.5, "Bodegas del Atuel", 24, GOLD_LIGHT, True, font=FONT_TITLE)
 textbox(s, 0.8, 4.08, 7.7, 0.7, "Modelo, integridad y rendimiento en PostgreSQL", 15, WHITE, font=FONT_BODY)
@@ -364,9 +364,7 @@ line.fill.solid()
 line.fill.fore_color.rgb = GOLD
 line.line.fill.background()
 
-textbox(s, 0.8, 5.42, 7.7, 0.3, "Etapa 9 · Documentación y defensa", 13, GOLD_LIGHT, True)
-textbox(s, 0.8, 5.86, 7.7, 0.6, "Jamardo, Camila (10842)\nSirotiuk, Juliana (10939)", 12, WHITE, font=FONT_BODY, line_spacing=1.25)
-textbox(s, 0.8, 6.75, 7.7, 0.3, "Noviembre 2026", 10, GOLD_LIGHT, font=FONT_BODY)
+textbox(s, 0.8, 5.42, 7.7, 0.6, "Jamardo, Camila (10842)\nSirotiuk, Juliana (10939)", 12, WHITE, font=FONT_BODY, line_spacing=1.25)
 
 notes(s, "Buenas. Somos Camila y Juliana. Vamos a mostrar cómo modelamos Bodegas del Atuel y cómo PostgreSQL hace cumplir las reglas. Cada concepto va acompañado de un fragmento real del repositorio y de la prueba que lo respalda.")
 
@@ -840,24 +838,32 @@ notes(s, "La demo sigue el mismo orden que la presentación. Si la red o la nube
 s = prs.slides.add_slide(blank)
 set_bg(s, DARK)
 
-line = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.85), Inches(1.15), Inches(1.4), Inches(0.05))
+line = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.85), Inches(1.05), Inches(1.4), Inches(0.05))
 line.fill.solid()
 line.fill.fore_color.rgb = GOLD
 line.line.fill.background()
 
-textbox(s, 0.85, 1.45, 7.0, 0.4, "CIERRE", 10.5, GOLD_LIGHT, True)
-textbox(s, 0.85, 1.95, 7.3, 1.0, "Lo que demuestra el TPI", 34, WHITE, True, font=FONT_TITLE)
-bullets(s, 0.9, 3.25, 7.2, 2.4, [
+textbox(s, 0.85, 1.45, 7.3, 1.0, "Lo que demuestra el TPI", 36, WHITE, True, font=FONT_TITLE)
+bullets(s, 0.9, 3.05, 7.2, 2.2, [
     "Modelo normalizado y trazable.",
     "Reglas ejecutadas por la base, no por la aplicación.",
     "Rendimiento medido, no supuesto.",
 ], 17, WHITE, 14, GOLD_LIGHT)
 
-textbox(s, 8.55, 2.35, 4.0, 1.0, "¿Preguntas?", 42, GOLD_LIGHT, True, font=FONT_TITLE, align=PP_ALIGN.CENTER)
-textbox(s, 8.6, 3.55, 3.9, 0.35, "Gracias", 16, WHITE, font=FONT_BODY, align=PP_ALIGN.CENTER)
-textbox(s, 8.6, 5.55, 3.9, 0.8, "Jamardo, Camila · 10842\nSirotiuk, Juliana · 10939", 10.5, GOLD_LIGHT, line_spacing=1.3, align=PP_ALIGN.CENTER)
+textbox(s, 0.9, 5.9, 7.2, 0.8, "Jamardo, Camila · 10842\nSirotiuk, Juliana · 10939", 10.5, GOLD_LIGHT, line_spacing=1.3)
 
-notes(s, "Cierre: el TPI demuestra que la base no es un depósito de datos, es el motor de reglas del sistema. Quedamos para preguntas sobre cualquier parte del trabajo.")
+rule = s.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(9.55), Inches(1.15), Inches(0.045), Inches(4.95))
+rule.fill.solid()
+rule.fill.fore_color.rgb = GOLD
+rule.line.fill.background()
+
+gracias = textbox(
+    s, 8.35, 3.05, 4.6, 1.35, "Gracias", 64, GOLD_LIGHT, True,
+    font=FONT_TITLE, align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE,
+)
+gracias.rotation = 270
+
+notes(s, "Cierre: el TPI demuestra que la base no es un depósito de datos, es el motor de reglas del sistema. Quedamos disponibles para cualquier consulta sobre el trabajo.")
 
 # ---------------------------------------------------------------------------
 # Guardar
