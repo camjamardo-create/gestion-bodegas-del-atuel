@@ -14,6 +14,13 @@
 - [Checklist manual de despliegue](despliegue/CHECKLIST_MANUAL.md)
 - [Notas de auditoría de secretos](despliegue/NOTAS_AUDITORIA.md)
 
+## Presentación
+
+- [Guion de la defensa (Etapa 9)](presentacion/guion.md)
+- [Presentación en PowerPoint](presentacion/Bodegas_del_Atuel_Etapa9.pptx)
+- [Presentación en PDF](presentacion/Bodegas_del_Atuel_Etapa9.pdf)
+- Generador: `presentacion/generar_presentacion.py`
+
 ## Recursos
 
 - [DER](DER-Bodegas-del-Atuel.jpg)
