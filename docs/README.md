@@ -21,6 +21,12 @@
 - [Presentación en PDF](presentacion/Bodegas_del_Atuel_Etapa9.pdf)
 - Generador: `presentacion/generar_presentacion.py`
 
+## Guía de estudio
+
+- [Guía de estudio en PowerPoint](presentacion/estudio/Bodegas_del_Atuel_Guia_Estudio.pptx)
+- [Guía de estudio en PDF](presentacion/estudio/Bodegas_del_Atuel_Guia_Estudio.pdf)
+- Generador: `presentacion/estudio/generar_estudio.py`
+
 ## Recursos
 
 - [DER](DER-Bodegas-del-Atuel.jpg)

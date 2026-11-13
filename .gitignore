@@ -21,5 +21,6 @@ backups/
 # Salidas temporales
 db/seed/.benchmark/
 docs/presentacion/render/
+docs/presentacion/estudio/render/
 .pytest_cache/
 .ruff_cache/
