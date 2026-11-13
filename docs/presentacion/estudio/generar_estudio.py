@@ -964,7 +964,7 @@ panels_row(s, y, [
     {"title": "Reparto sugerido", "items": right, "accent": GREEN},
 ], h=h)
 callout(s, "No memoricen: sepan ubicar el archivo, la regla y la decisión.", 5.65, 13.5)
-footer(s, 22, "Guía de estudio · Bodegas del Atuel")
+footer(s, 22, "Bodegas del Atuel · TPI Bases de Datos")
 notes(s, "El objetivo del ensayo no es recitar: es poder ubicar rápido la decisión y el archivo. Si una pregunta no se sabe, conviene responder con el criterio: qué entidad es, qué regla la protege y dónde vive. Eso demuestra comprensión del modelo.")
 
 OUT.parent.mkdir(parents=True, exist_ok=True)
